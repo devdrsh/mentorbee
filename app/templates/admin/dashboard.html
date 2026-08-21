@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<nav class="bg-white border-b border-amber-200/80 px-4 sm:px-6 py-3 shadow-sm flex justify-between items-center sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+        <img src="/static/img/logo.png" alt="MentorBee" class="h-8 sm:h-9 w-auto object-contain">
+        <span class="text-xs sm:text-sm font-extrabold bg-amber-100 text-amber-900 border border-amber-300/60 px-2.5 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-block">Admin Console</span>
+    </div>
+    
+    <div class="flex items-center gap-3">
+        <!-- Logged in Admin / Coordinator Info Badge -->
+        <div id="admin-user-badge" class="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 text-amber-950 px-3 py-1 rounded-xl text-xs font-bold shadow-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="admin-name" class="font-extrabold truncate max-w-[120px] sm:max-w-[180px]">Admin</span>
+            <span id="admin-role-badge" class="bg-amber-200 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-md font-black uppercase">ALL</span>
+        </div>
+
+        <a href="/" target="_blank" class="text-xs font-bold text-slate-600 hover:text-amber-600 transition-colors hidden md:inline-flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span>Mentor Portal ↗</span>
+        </a>
+        <button onclick="logout()" class="text-xs sm:text-sm font-bold text-slate-700 hover:text-red-600 transition-colors bg-slate-100 hover:bg-red-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-slate-200">
+            Logout
+        </button>
+    </div>
+</nav>
+
+<div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
+        <div class="flex gap-4 sm:gap-6 overflow-x-auto">
+            <button onclick="switchTab('sessions')" id="tab-sessions" class="font-extrabold text-base sm:text-lg text-amber-700 border-b-2 border-amber-500 px-2 pb-2 transition-all whitespace-nowrap">Sessions</button>
+            <button onclick="switchTab('batches')" id="tab-batches" class="font-bold text-base sm:text-lg text-slate-400 hover:text-amber-700 px-2 pb-2 transition-all whitespace-nowrap">Batches</button>
+            <button onclick="switchTab('audit-logs')" id="tab-audit-logs" class="hidden font-bold text-base sm:text-lg text-slate-400 hover:text-amber-700 px-2 pb-2 transition-all whitespace-nowrap items-center gap-1.5">
+                <span>Access & Share Audit Logs</span>
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            </button>
+        </div>
+        <button onclick="showCreateModal()" class="w-full sm:w-auto bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:bg-amber-500 active:scale-[0.98] font-bold text-sm transition-all flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+            <span>Create Session</span>
+        </button>
+    </div>
+
+    <!-- Sessions Tab View -->
+    <div id="sessions-view">
+        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-amber-100/80 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-amber-50/50 text-slate-700 text-xs uppercase font-extrabold border-b border-amber-100">
+                        <tr>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Class / Category</th>
+                            <th class="p-4">Batch</th>
+                            <th class="p-4">Topic</th>
+                            <th class="p-4">Time</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batches Tab View -->
+    <div id="batches-view" class="hidden">
+        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-amber-100/80 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[500px]">
+                    <thead class="bg-amber-50/50 text-slate-700 text-xs uppercase font-extrabold border-b border-amber-100">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Batch Name</th>
+                            <th class="p-4">Syllabus</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batches-tbody" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Logs Tab View -->
+    <div id="audit-logs-view" class="hidden">
+        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-amber-100/80 overflow-hidden">
+            <div class="p-4 bg-amber-50/40 border-b border-amber-100 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h4 class="font-extrabold text-slate-900 text-sm">Mentor Access & Link Sharing Tracking</h4>
+                    <p class="text-slate-500 text-xs">Real-time audit log of all mentor logins, link copying, and class access.</p>
+                </div>
+                <button onclick="loadAuditLogs()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-lg transition-all flex items-center gap-1">
+                    <span>↻ Refresh Logs</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[600px]">
+                    <thead class="bg-slate-50 text-slate-700 text-xs uppercase font-extrabold border-b border-slate-200">
+                        <tr>
+                            <th class="p-4">Time</th>
+                            <th class="p-4">Mentor / Staff</th>
+                            <th class="p-4">Class Scope</th>
+                            <th class="p-4">Action</th>
+                            <th class="p-4">Batch / Details</th>
+                            <th class="p-4">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-logs-tbody" class="divide-y divide-slate-100 text-xs"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container -->
+<div id="modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 transition-opacity">
+    <div class="bg-white rounded-3xl w-full max-w-xl shadow-2xl flex flex-col max-h-[92vh] border border-amber-200/80 overflow-hidden">
+        <div class="flex justify-between items-center p-5 sm:p-6 border-b border-slate-100 bg-amber-50/40">
+            <h3 id="modal-title" class="text-lg sm:text-xl font-extrabold text-slate-900">Create</h3>
+            <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xl transition-colors">&times;</button>
+        </div>
+        <div class="p-5 sm:p-6 overflow-y-auto flex-1 text-sm" id="modal-body"></div>
+    </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+{% endblock %}

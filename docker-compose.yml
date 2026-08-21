@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  mentorbee-web:
+    build: .
+    container_name: mentorbee_meeting_system
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SECRET_KEY=mentorbee_prod_secret_key_change_me_in_production
+      - DATABASE_URL=sqlite:///./mentorbee.db
+    volumes:
+      - mentorbee_data:/app
+
+volumes:
+  mentorbee_data:

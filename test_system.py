@@ -1,0 +1,119 @@
+import sys
+import os
+from fastapi.testclient import TestClient
+
+sys.path.insert(0, os.path.realpath(os.path.dirname(__file__)))
+
+from app.main import app
+
+client = TestClient(app)
+
+def test_all():
+    print("=" * 60)
+    print("RUNNING AUTOMATED SYSTEM TESTS")
+    print("=" * 60)
+
+    # 1. Test Mentor Login with correct passcode
+    res = client.post("/api/mentor/login", json={
+        "name": "TEST MENTOR",
+        "assigned_class": "8TH",
+        "passcode": "AGENTBEE0809"
+    })
+    print(f"1. Mentor Login (Valid Passcode): Status {res.status_code}")
+    assert res.status_code == 200, f"Expected 200, got {res.status_code}: {res.text}"
+    mentor_data = res.json()
+    mentor_token = mentor_data["access_token"]
+    print(f"   Logged in as: {mentor_data['name']}, Class: {mentor_data['assigned_class']}")
+
+    # 2. Test Mentor Login with invalid passcode
+    res = client.post("/api/mentor/login", json={
+        "name": "TEST MENTOR",
+        "assigned_class": "8TH",
+        "passcode": "WRONG_PASS"
+    })
+    print(f"2. Mentor Login (Invalid Passcode): Status {res.status_code}")
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}"
+
+    # 3. Test Mentor Log Action
+    res = client.post(
+        "/api/mentor/log-action",
+        headers={"Authorization": f"Bearer {mentor_token}"},
+        json={
+            "action": "COPY_MESSAGE",
+            "session_id": 1,
+            "batch_name": "8TH STATE ONLINE BATCH",
+            "details": "Mentor copied message for 8th State"
+        }
+    )
+    print(f"3. Mentor Action Logging: Status {res.status_code}")
+    assert res.status_code == 200
+
+    # 4. Test Coordinator & Super Admin Logins
+    coordinators_to_test = [
+        ("admin@mentorbee.com", "AdminPassword@123", "SUPER_ADMIN", "ALL"),
+        ("abin@mentorbee.com", "AbinPassword@8th", "COORDINATOR", "8TH"),
+        ("abhijith@mentorbee.com", "AbhijithPassword@9th", "COORDINATOR", "9TH"),
+        ("sreehari@mentorbee.com", "SreehariPassword@10th", "COORDINATOR", "10TH"),
+        ("pavin@mentorbee.com", "PavinPassword@11sci", "COORDINATOR", "11TH SCI"),
+        ("akash@mentorbee.com", "AkashPassword@11com", "COORDINATOR", "11TH COM"),
+        ("murali@mentorbee.com", "MuraliPassword@12th", "COORDINATOR", "12TH SCI,12TH COM"),
+    ]
+
+    print("\n4. Testing Admin / Coordinator Logins:")
+    admin_token = None
+    for email, pwd, expected_role, expected_class in coordinators_to_test:
+        res = client.post("/api/admin/login", json={"email": email, "password": pwd})
+        assert res.status_code == 200, f"Login failed for {email}: {res.text}"
+        data = res.json()
+        assert data["role"] == expected_role, f"Expected role {expected_role}, got {data['role']}"
+        assert data["assigned_classes"] == expected_class, f"Expected class {expected_class}, got {data['assigned_classes']}"
+        print(f"   [OK] {data['name']} ({email}) -> Role: {data['role']} | Class: {data['assigned_classes']}")
+        if email == "admin@mentorbee.com":
+            admin_token = data["access_token"]
+
+    # 5. Test Batches Query Scoped by Class Category
+    res = client.get("/api/batches?class_category=8TH")
+    print(f"\n5. Batches Query for '8TH': Status {res.status_code}, Count: {len(res.json())}")
+    assert res.status_code == 200
+    assert len(res.json()) >= 13
+
+    res = client.get("/api/batches?class_category=12TH SCI")
+    print(f"   Batches Query for '12TH SCI': Status {res.status_code}, Count: {len(res.json())}")
+    assert res.status_code == 200
+    assert len(res.json()) >= 16
+
+    # 6. Test Admin Audit Logs Query
+    res = client.get("/api/admin/audit-logs", headers={"Authorization": f"Bearer {admin_token}"})
+    print(f"\n6. Audit Logs Query: Status {res.status_code}, Entries: {len(res.json())}")
+    assert res.status_code == 200
+    assert len(res.json()) > 0
+    print(f"   Latest log entry: {res.json()[0]['mentor_name']} - {res.json()[0]['action']} ({res.json()[0]['assigned_class']})")
+
+    # 7. Test Session Creation with class_category
+    batch_8th = client.get("/api/batches?class_category=8TH").json()[0]
+    res = client.post(
+        "/api/sessions",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "batch_id": batch_8th["id"],
+            "class_category": "8TH",
+            "topic": "8th Mathematics - Linear Equations",
+            "class_date": "2026-08-20",
+            "start_time": "18:00",
+            "zoom_link": "https://zoom.us/j/888999111",
+            "meeting_id": "888 999 111",
+            "passcode": "123456"
+        }
+    )
+    print(f"\n7. Create Session with class_category: Status {res.status_code}")
+    assert res.status_code == 200
+    created_session = res.json()
+    assert created_session["class_category"] == "8TH"
+    print(f"   Created Session ID: {created_session['id']}")
+
+    print("\n" + "=" * 60)
+    print("ALL TESTS PASSED SUCCESSFULLY!")
+    print("=" * 60)
+
+if __name__ == "__main__":
+    test_all()

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MentorBee - Mentor Class Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .hidden { display: none !important; }
+        * { -webkit-tap-highlight-color: transparent; }
+
+        /* Smooth tab animations */
+        .syllabus-tab-active {
+            background-color: #ffffff;
+            color: #78350f;
+            box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #fcd34d;
+        }
+        .syllabus-tab-inactive {
+            background-color: transparent;
+            color: #64748b;
+            border-color: transparent;
+        }
+        .syllabus-tab-inactive:hover {
+            color: #b45309;
+            background-color: rgba(254, 243, 199, 0.5);
+        }
+
+        /* Time sub-tabs */
+        .time-tab-active {
+            color: #b45309;
+            border-bottom: 3px solid #f59e0b;
+        }
+        .time-tab-inactive {
+            color: #94a3b8;
+            border-bottom: 3px solid transparent;
+        }
+
+        /* Grade filter chips */
+        .chip-active {
+            background-color: #f59e0b;
+            color: #ffffff;
+            border-color: #d97706;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+        .chip-inactive {
+            background-color: #ffffff;
+            color: #475569;
+            border-color: #e2e8f0;
+            font-weight: 600;
+        }
+        .chip-inactive:hover {
+            border-color: #fcd34d;
+            color: #b45309;
+            background-color: #fffbeb;
+        }
+
+        /* Session card hover & tap */
+        .session-card {
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+        }
+        .session-card:active {
+            transform: scale(0.99);
+        }
+        @media (hover: hover) {
+            .session-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 14px 30px -8px rgba(245, 158, 11, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+            }
+        }
+
+        /* Ambient gradient backdrop */
+        .bg-mesh {
+            background-color: #fafaf7;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(254, 243, 199, 0.45) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(253, 230, 138, 0.25) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Pulse glow animation for Live badge */
+        @keyframes subtlePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.95); }
+        }
+        .live-pulse {
+            animation: subtlePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Custom scrollbar for horizontal chip scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-mesh min-h-screen text-slate-800 font-sans selection:bg-amber-200 antialiased flex flex-col">
+    <!-- Auth Check Script -->
+    <script>
+        const token = localStorage.getItem('mentor_token');
+        if (!token) {
+            window.location.href = '/mentor/login';
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md border-b border-amber-200/60 sticky top-0 z-30 shadow-sm transition-all">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+            <!-- Brand Logo & Name -->
+            <a href="/" class="flex items-center gap-2 group transition-transform active:scale-95">
+                <img src="/static/img/logo.png" alt="MentorBee Logo" class="h-8 sm:h-10 w-auto object-contain drop-shadow-sm">
+            </a>
+
+            <!-- Staff Info & Logout -->
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 text-amber-950 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="header-mentor-name" class="font-extrabold truncate max-w-[110px] sm:max-w-[160px]">Staff</span>
+                    <span id="header-mentor-class" class="bg-amber-200 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-md font-black uppercase">8TH</span>
+                </div>
+                
+                <button onclick="logoutMentor()" title="Logout" class="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-2xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 flex-1">
+        
+        <!-- Primary Syllabus Switcher Tabs (CBSE vs STATE) -->
+        <div class="p-1.5 bg-amber-100/60 border border-amber-200/90 rounded-2xl sm:rounded-3xl grid grid-cols-2 gap-1.5 mb-5 shadow-inner">
+            <button id="tab-syllabus-cbse" onclick="switchSyllabus('CBSE')" 
+                class="syllabus-tab-active py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                <span>CBSE</span>
+                <span id="badge-cbse-count" class="hidden text-[11px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-black">0</span>
+            </button>
+
+            <button id="tab-syllabus-state" onclick="switchSyllabus('STATE')" 
+                class="syllabus-tab-inactive py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span>STATE</span>
+                <span id="badge-state-count" class="hidden text-[11px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-black">0</span>
+            </button>
+        </div>
+
+        <!-- Sub Navigation: Today vs Upcoming & Grade Filter Chips -->
+        <div class="space-y-3 mb-5 sm:mb-6">
+            <!-- Time Tabs (Today vs Upcoming) -->
+            <div class="flex items-center justify-between border-b border-slate-200 px-1">
+                <div class="flex gap-4 sm:gap-8">
+                    <button onclick="switchTimeTab('today')" id="tab-time-today" class="time-tab-active pb-2.5 font-bold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center gap-2">
+                        <span>Today's Classes</span>
+                        <span id="today-count" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-extrabold"></span>
+                    </button>
+                    <button onclick="switchTimeTab('upcoming')" id="tab-time-upcoming" class="time-tab-inactive pb-2.5 font-bold text-sm sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-2">
+                        <span>Upcoming</span>
+                        <span id="upcoming-count" class="hidden text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-extrabold"></span>
+                    </button>
+                </div>
+
+                <!-- Active Syllabus Indicator Tag -->
+                <span id="active-syllabus-indicator" class="text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-white border border-amber-200 text-amber-900 shadow-sm hidden sm:inline-block">
+                    CBSE Syllabus
+                </span>
+            </div>
+
+            <!-- Grade / Class Filter Chips (All, 8th, 9th, 10th, 11th, 12th) -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+                <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider pl-1 flex-shrink-0">Grade:</span>
+                <button onclick="switchClassFilter('')" id="chip-all" class="chip-active px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    All Classes
+                </button>
+                <button onclick="switchClassFilter('8TH')" id="chip-8TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    8th
+                </button>
+                <button onclick="switchClassFilter('9TH')" id="chip-9TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    9th
+                </button>
+                <button onclick="switchClassFilter('10TH')" id="chip-10TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    10th
+                </button>
+                <button onclick="switchClassFilter('11TH')" id="chip-11TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    11th
+                </button>
+                <button onclick="switchClassFilter('12TH')" id="chip-12TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    12th
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loader" class="text-center py-16 text-amber-700/60">
+            <div class="animate-spin inline-block w-9 h-9 border-[3.5px] border-amber-400 border-t-transparent rounded-full" role="status" aria-label="loading"></div>
+            <p class="mt-3 font-semibold text-slate-500 text-sm">Syncing class links...</p>
+        </div>
+
+        <!-- Class List Container -->
+        <div id="class-list" class="space-y-4"></div>
+
+        <!-- Empty State Container -->
+        <div id="empty-state" class="hidden text-center py-12 sm:py-16 px-6 bg-white rounded-3xl border border-amber-100 shadow-sm mt-2">
+            <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-200/70 shadow-inner">
+                <img src="/static/img/logo.png" alt="MentorBee" class="h-10 w-auto object-contain opacity-80">
+            </div>
+            <h3 id="empty-title" class="text-lg font-bold text-slate-800">No classes scheduled</h3>
+            <p id="empty-desc" class="text-slate-500 text-sm mt-1 max-w-xs mx-auto">There are no active sessions found for this syllabus and filter.</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-slate-400 border-t border-slate-100 mt-auto">
+        <p>© MentorBee • Live Class Sharing System</p>
+    </footer>
+
+    <!-- Toast Notification (Optimized for Mobile) -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl opacity-0 translate-y-2 transition-all duration-300 pointer-events-none font-semibold flex items-center gap-2.5 z-50 text-sm border border-slate-700/50 whitespace-nowrap">
+        <div class="w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-slate-950 flex-shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <span>Message copied to clipboard!</span>
+    </div>
+
+    <script src="/static/js/mentor.js"></script>
+</body>
+</html>
