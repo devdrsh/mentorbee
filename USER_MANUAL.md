@@ -57,24 +57,24 @@ The Administrative Console provides total operational control over sessions, bat
 ### 3.2 Tab 1: Sessions Management & Advanced Filtering
 - **Sessions Filtering & Search Toolbar**:
   - **🔍 Search Filter**: Live instant filtering by Topic, Batch Name, Subject, or Timing.
-  - **Syllabus Filter**: Filter by `All Syllabuses`, `CBSE`, or `STATE`.
+  - **Syllabus Filter**: Filter by `All Syllabuses`, `CBSE`, `STATE`, or `⚡ EXAM KILLER`.
   - **Class / Grade Filter**: Filter by `All Classes`, `8th`, `9th`, `10th`, `11th Sci`, `11th Com`, `12th Sci`, or `12th Com`.
   - **Date Filter**: Filter between `All Dates`, `Today's Sessions`, or `Upcoming Sessions`.
   - **Live Counter & Reset**: Displays exact matched count (e.g. `12 of 34 Sessions`) with a 1-click `Reset` button.
 - **Creating a Session**:
   1. Click **`+ Create Session`**.
-  2. *(Recommended)* Paste full Zoom meeting invite into **`⚡ Quick Zoom Paste Auto-Fill`** and click **`Auto Parse Link & Credentials`**.
-  3. Select **Assigned Class Stream** (e.g., *10th Class*) and **Syllabus Filter** (e.g., *CBSE*).
+  2. *(Recommended)* Paste full Zoom meeting invite or raw Zoom link into **`⚡ Quick Zoom Paste Auto-Fill`**. The system **instantly auto-extracts** the **Zoom Link**, **Meeting ID**, and **Passcode** (both from the invite text or from the link's `?pwd=` parameter). You can also click **`Auto Parse Link & Credentials`** for deep server-side extraction.
+  3. Select **Assigned Class Stream** (e.g., *10th Class*, or *⚡ Exam Killer*) and **Syllabus Filter** (*CBSE*, *STATE*, or *⚡ Exam Killer*).
   4. Select the target **Batch** from the filtered dropdown.
-  5. Enter the **Class Topic / Subject** (e.g., *Mathematics - Quadratic Equations*).
+  5. Enter the **Class Topic / Subject** (e.g., *10th Math - Quadratic Equations*).
   6. Confirm **Date** and **Start Time** (IST).
   7. Click **`Save & Broadcast Session`**.
 - **Editing a Session**: Click **`Edit`** on any row to modify topics, meeting links, or start times. Changes trigger instant WebSocket notifications to mentors.
 - **Deleting a Session**: Click **`Delete`** to remove obsolete sessions with confirmation protection.
 
 ### 3.3 Tab 2: Batches Management
-- View all 106+ State and CBSE batches categorized by grade.
-- Click **`+ Create Batch`** to register new classes. The system automatically infers syllabus and grade categories from the name.
+- View all 116+ State, CBSE, and Exam Killer batches categorized by grade and program.
+- Click **`+ Create Batch`** to register new classes. You can specify Name, Program (`CBSE`, `STATE`, `⚡ EXAM KILLER`), and Class Stream.
 - Click **`Edit`** to adjust batch nomenclature or status.
 
 ### 3.4 Tab 3: Security & Access Audit Trail (Super Admin Exclusive)
@@ -98,8 +98,11 @@ Designed for lightning-fast operation on mobile smartphones, tablets, and deskto
 4. Enter the **Mentor Password**: `agentBEE`.
 5. Click **`Access All Class Sessions`**.
 
-### 4.2 Dashboard Controls, Instant Search & Class Filtering
-- **CBSE vs STATE Primary Tabs**: Switch between CBSE and State syllabuses with dynamic live count badges.
+### 4.2 Dashboard Controls, Instant Search & Program Sections
+- **Three-Way Primary Program Switcher Tabs**:
+  - **`CBSE` Tab (Blue Dot)**: Displays only CBSE affiliated batches with live count.
+  - **`STATE` Tab (Green Dot)**: Displays only Kerala State Board batches with live count.
+  - **`⚡ EXAM KILLER` Tab (Rose Dot)**: Dedicated section for high-intensity Exam Killer crash courses, model exams, and revision discussions, completely segregated from regular classes.
 - **🔍 Instant Search Bar**: Search dynamically by Batch Name, Subject/Topic, or Time. Results filter in real-time.
 - **Class Filter Chips (Inside Syllabus)**: Filter instantly between `All Classes`, `8th`, `9th`, `10th`, `11th Sci`, `11th Com`, `12th Sci`, and `12th Com`.
 - **Today vs Upcoming Tabs**: Filter between today's active schedule and future sessions.
@@ -107,6 +110,7 @@ Designed for lightning-fast operation on mobile smartphones, tablets, and deskto
 ### 4.3 1-Click Class Actions & Audit Accountability
 - **📋 Copy Message**: Generates the standardized WhatsApp broadcast text with 1 tap. Automatically records the staff member's name in the Admin Security Audit Log.
 - **🚀 Join Zoom**: Direct link to open the Zoom app or web meeting room. Records the launch action in the Admin Security Audit Log.
+
 
 ---
 

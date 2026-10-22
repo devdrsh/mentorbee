@@ -12,7 +12,9 @@ router = APIRouter(prefix="/api/batches", tags=["batches"])
 
 def infer_syllabus(name: str) -> str:
     upper = name.upper()
-    if "STATE" in upper:
+    if "EXAM KILLER" in upper or "EXAMKILLER" in upper or "EXAM_KILLER" in upper:
+        return "EXAM KILLER"
+    elif "STATE" in upper:
         return "STATE"
     elif "CBSE" in upper:
         return "CBSE"
@@ -22,25 +24,32 @@ def infer_class_number(name: str) -> str:
     m = re.match(r"^(\d+(?:TH|ST|ND|RD)?)\b", name, re.IGNORECASE)
     if m:
         return m.group(1).upper()
+    m2 = re.search(r"\b(8TH|9TH|10TH|11TH|12TH|8|9|10|11|12)\b", name, re.IGNORECASE)
+    if m2:
+        val = m2.group(1).upper()
+        return val if "TH" in val else f"{val}TH"
     return ""
 
 def infer_class_category(name: str) -> str:
     name_upper = name.upper()
-    if name_upper.startswith("8TH") or name_upper.startswith("8"):
+    if "8TH" in name_upper or "CLASS 8" in name_upper:
         return "8TH"
-    if name_upper.startswith("9TH") or name_upper.startswith("9"):
+    if "9TH" in name_upper or "CLASS 9" in name_upper:
         return "9TH"
-    if name_upper.startswith("10TH") or name_upper.startswith("10"):
+    if "10TH" in name_upper or "CLASS 10" in name_upper or "SSLC" in name_upper:
         return "10TH"
-    if name_upper.startswith("11TH") or name_upper.startswith("11"):
+    if "11TH" in name_upper or "CLASS 11" in name_upper or "PLUS ONE" in name_upper:
         if "COM" in name_upper or "COMMERCE" in name_upper:
             return "11TH COM"
         return "11TH SCI"
-    if name_upper.startswith("12TH") or name_upper.startswith("12"):
+    if "12TH" in name_upper or "CLASS 12" in name_upper or "PLUS TWO" in name_upper:
         if "COM" in name_upper or "COMMERCE" in name_upper:
             return "12TH COM"
         return "12TH SCI"
+    if "EXAM KILLER" in name_upper or "EXAMKILLER" in name_upper:
+        return "EXAM KILLER"
     return "OTHER"
+
 
 @router.post("", response_model=BatchResponse)
 def create_batch(batch: BatchCreate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin)):

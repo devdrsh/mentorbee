@@ -108,29 +108,49 @@ CBSE_BATCH_NAMES = [
     "12TH CBSE COMMERCE EXAM ID",
 ]
 
+EXAM_KILLER_BATCH_NAMES = [
+    "8TH EXAM KILLER BATCH",
+    "9TH EXAM KILLER BATCH",
+    "10TH EXAM KILLER BATCH",
+    "10TH EXAM KILLER SSLC BATCH",
+    "11TH EXAM KILLER SCIENCE BATCH",
+    "11TH EXAM KILLER COMMERCE BATCH",
+    "12TH EXAM KILLER SCIENCE BATCH",
+    "12TH EXAM KILLER COMMERCE BATCH",
+    "EXAM KILLER CRASH COURSE SPECIAL",
+    "EXAM KILLER REVISION KL BATCH",
+]
+
 def extract_class_number(name: str) -> str:
     m = re.match(r"^(\d+(?:TH|ST|ND|RD)?)\b", name, re.IGNORECASE)
     if m:
         return m.group(1).upper()
+    m2 = re.search(r"\b(8TH|9TH|10TH|11TH|12TH|8|9|10|11|12)\b", name, re.IGNORECASE)
+    if m2:
+        val = m2.group(1).upper()
+        return val if "TH" in val else f"{val}TH"
     return ""
 
 def extract_class_category(name: str) -> str:
     name_upper = name.upper()
-    if name_upper.startswith("8TH") or name_upper.startswith("8"):
+    if "8TH" in name_upper or "CLASS 8" in name_upper:
         return "8TH"
-    if name_upper.startswith("9TH") or name_upper.startswith("9"):
+    if "9TH" in name_upper or "CLASS 9" in name_upper:
         return "9TH"
-    if name_upper.startswith("10TH") or name_upper.startswith("10"):
+    if "10TH" in name_upper or "CLASS 10" in name_upper or "SSLC" in name_upper:
         return "10TH"
-    if name_upper.startswith("11TH") or name_upper.startswith("11"):
+    if "11TH" in name_upper or "CLASS 11" in name_upper or "PLUS ONE" in name_upper:
         if "COM" in name_upper or "COMMERCE" in name_upper:
             return "11TH COM"
         return "11TH SCI"
-    if name_upper.startswith("12TH") or name_upper.startswith("12"):
+    if "12TH" in name_upper or "CLASS 12" in name_upper or "PLUS TWO" in name_upper:
         if "COM" in name_upper or "COMMERCE" in name_upper:
             return "12TH COM"
         return "12TH SCI"
+    if "EXAM KILLER" in name_upper:
+        return "EXAM KILLER"
     return "OTHER"
+
 
 def populate():
     db = SessionLocal()
@@ -195,11 +215,40 @@ def populate():
             batch.is_active = True
             updated_count += 1
 
+    # Process EXAM KILLER batches
+    for raw_name in EXAM_KILLER_BATCH_NAMES:
+        name = " ".join(raw_name.strip().split()).upper()
+        if name in seen_names:
+            continue
+        seen_names.add(name)
+        class_num = extract_class_number(name)
+        class_cat = extract_class_category(name)
+        
+        batch = db.query(Batch).filter(Batch.name == name).first()
+        if not batch:
+            batch = Batch(
+                name=name,
+                class_number=class_num,
+                class_category=class_cat,
+                syllabus="EXAM KILLER",
+                is_active=True
+            )
+            db.add(batch)
+            created_count += 1
+        else:
+            batch.syllabus = "EXAM KILLER"
+            batch.class_number = class_num
+            batch.class_category = class_cat
+            batch.is_active = True
+            updated_count += 1
+
     # Update any existing legacy batches syllabus & class_category based on name
     all_batches = db.query(Batch).all()
     for b in all_batches:
         if not b.syllabus:
-            if "STATE" in b.name.upper():
+            if "EXAM KILLER" in b.name.upper() or "EXAMKILLER" in b.name.upper():
+                b.syllabus = "EXAM KILLER"
+            elif "STATE" in b.name.upper():
                 b.syllabus = "STATE"
             elif "CBSE" in b.name.upper():
                 b.syllabus = "CBSE"
@@ -214,6 +263,7 @@ def populate():
     
     total_state = db.query(Batch).filter(Batch.syllabus == "STATE").count()
     total_cbse = db.query(Batch).filter(Batch.syllabus == "CBSE").count()
+    total_exam_killer = db.query(Batch).filter(Batch.syllabus == "EXAM KILLER").count()
     total_all = db.query(Batch).count()
     
     print(f"Populate complete:")
@@ -221,7 +271,9 @@ def populate():
     print(f"- Updated: {updated_count}")
     print(f"- Total STATE Batches: {total_state}")
     print(f"- Total CBSE Batches: {total_cbse}")
+    print(f"- Total EXAM KILLER Batches: {total_exam_killer}")
     print(f"- Total All Batches: {total_all}")
+
     
     db.close()
 

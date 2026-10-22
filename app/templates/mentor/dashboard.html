@@ -44,6 +44,12 @@
             box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.05);
             border-color: #fcd34d;
         }
+        .syllabus-tab-active-exam {
+            background: linear-gradient(135deg, #fff1f2 0%, #ffffff 100%);
+            color: #be123c;
+            box-shadow: 0 4px 14px -2px rgba(225, 29, 72, 0.25), 0 2px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #fca5a5;
+        }
         .syllabus-tab-inactive {
             background-color: transparent;
             color: #64748b;
@@ -53,6 +59,7 @@
             color: #b45309;
             background-color: rgba(254, 243, 199, 0.5);
         }
+
 
         /* Time sub-tabs */
         .time-tab-active {
@@ -163,22 +170,30 @@
     <!-- Main Content Area -->
     <main class="max-w-2xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 flex-1">
         
-        <!-- Primary Syllabus Switcher Tabs (CBSE vs STATE) -->
-        <div class="p-1.5 bg-amber-100/60 border border-amber-200/90 rounded-2xl sm:rounded-3xl grid grid-cols-2 gap-1.5 mb-4 shadow-inner">
+        <!-- Primary Syllabus Switcher Tabs (CBSE vs STATE vs EXAM KILLER) -->
+        <div class="p-1.5 bg-amber-100/60 border border-amber-200/90 rounded-2xl sm:rounded-3xl grid grid-cols-3 gap-1.5 mb-4 shadow-inner">
             <button id="tab-syllabus-cbse" onclick="switchSyllabus('CBSE')" 
-                class="syllabus-tab-active py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation">
+                class="syllabus-tab-active py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
                 <span>CBSE</span>
-                <span id="badge-cbse-count" class="hidden text-[11px] sm:text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-black">0</span>
+                <span id="badge-cbse-count" class="hidden text-[10px] sm:text-xs bg-blue-100 text-blue-800 px-1.5 sm:px-2 py-0.5 rounded-full font-black">0</span>
             </button>
 
             <button id="tab-syllabus-state" onclick="switchSyllabus('STATE')" 
-                class="syllabus-tab-inactive py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation">
+                class="syllabus-tab-inactive py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 <span>STATE</span>
-                <span id="badge-state-count" class="hidden text-[11px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-black">0</span>
+                <span id="badge-state-count" class="hidden text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-1.5 sm:px-2 py-0.5 rounded-full font-black">0</span>
+            </button>
+
+            <button id="tab-syllabus-exam-killer" onclick="switchSyllabus('EXAM KILLER')" 
+                class="syllabus-tab-inactive py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span>⚡ EXAM KILLER</span>
+                <span id="badge-exam-killer-count" class="hidden text-[10px] sm:text-xs bg-rose-100 text-rose-800 px-1.5 sm:px-2 py-0.5 rounded-full font-black">0</span>
             </button>
         </div>
+
 
         <!-- Real-Time Search Bar -->
         <div class="relative mb-4">

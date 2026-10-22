@@ -101,9 +101,13 @@ async function loadBatches() {
         }
         batches.forEach(b => {
             const isCbse = b.syllabus === 'CBSE';
+            const isExamKiller = b.syllabus === 'EXAM KILLER' || (b.name && b.name.includes('EXAM KILLER'));
             const sylBadge = isCbse 
                 ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-full text-xs font-bold">CBSE</span>`
-                : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-bold">STATE</span>`;
+                : (isExamKiller 
+                    ? `<span class="bg-rose-50 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-xs font-extrabold">⚡ EXAM KILLER</span>`
+                    : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-bold">STATE</span>`);
+
 
             const catBadge = b.class_category ? `
                 <span class="bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md text-xs font-extrabold">
@@ -205,9 +209,15 @@ function renderSessionsTable() {
     let filtered = sessions.filter(s => {
         // 1. Syllabus filter
         if (syllabusFilter !== 'ALL') {
-            const syl = s.batch && s.batch.syllabus ? s.batch.syllabus : '';
-            if (syl !== syllabusFilter) return false;
+            const syl = (s.batch && s.batch.syllabus ? s.batch.syllabus : '').toUpperCase();
+            if (syllabusFilter === 'EXAM KILLER') {
+                const batchName = (s.batch && s.batch.name ? s.batch.name : '').toUpperCase();
+                if (syl !== 'EXAM KILLER' && !batchName.includes('EXAM KILLER')) return false;
+            } else if (syl !== syllabusFilter) {
+                return false;
+            }
         }
+
 
         // 2. Class filter
         if (classFilter !== 'ALL') {
@@ -257,7 +267,10 @@ function renderSessionsTable() {
         const syllabus = s.batch && s.batch.syllabus ? s.batch.syllabus : '';
         const sylBadge = syllabus === 'CBSE' 
             ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">CBSE</span>`
-            : (syllabus === 'STATE' ? `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">STATE</span>` : '');
+            : (syllabus === 'EXAM KILLER' || (s.batch && s.batch.name && s.batch.name.includes('EXAM KILLER'))
+                ? `<span class="bg-rose-50 text-rose-700 border border-rose-300 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">⚡ EXAM KILLER</span>`
+                : (syllabus === 'STATE' ? `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">STATE</span>` : ''));
+
 
         const classCat = s.class_category || (s.batch ? s.batch.class_category : '') || (s.batch ? s.batch.class_number : '');
         const classBadge = classCat ? `
@@ -336,10 +349,23 @@ function updateBatchDropdownOptions(selectedCategory, selectedSyllabus) {
 
     let filtered = batches;
     if (selectedCategory && selectedCategory !== 'ALL') {
-        filtered = filtered.filter(b => b.class_category === selectedCategory || b.class_number === selectedCategory);
+        filtered = filtered.filter(b => {
+            if (selectedCategory === 'EXAM KILLER') {
+                return (b.syllabus === 'EXAM KILLER') || (b.class_category === 'EXAM KILLER') || (b.name && b.name.includes('EXAM KILLER'));
+            }
+            if (b.class_category === selectedCategory) return true;
+            if (b.class_number === selectedCategory) return true;
+            if (b.class_number && selectedCategory.startsWith(b.class_number)) return true;
+            return false;
+        });
     }
     if (selectedSyllabus && selectedSyllabus !== 'ALL') {
-        filtered = filtered.filter(b => b.syllabus === selectedSyllabus);
+        filtered = filtered.filter(b => {
+            if (selectedSyllabus === 'EXAM KILLER') {
+                return (b.syllabus === 'EXAM KILLER') || (b.name && b.name.includes('EXAM KILLER'));
+            }
+            return b.syllabus === selectedSyllabus;
+        });
     }
 
     if (filtered.length === 0) {
@@ -354,8 +380,8 @@ function updateBatchDropdownOptions(selectedCategory, selectedSyllabus) {
 }
 
 function onClassCategoryOrSyllabusChange() {
-    const cat = document.getElementById('s_class_category').value;
-    const syl = document.getElementById('s_syllabus_filter').value;
+    const cat = document.getElementById('s_class_category')?.value || 'ALL';
+    const syl = document.getElementById('s_syllabus_filter')?.value || 'ALL';
     updateBatchDropdownOptions(cat, syl);
 }
 
@@ -365,12 +391,33 @@ function showCreateModal() {
         document.getElementById('modal-title').innerText = 'Create Batch';
         document.getElementById('modal-body').innerHTML = `
             <form id="createForm" onsubmit="submitBatch(event)">
-                <div class="space-y-4">
+                <div class="space-y-3.5">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Batch Name</label>
-                        <input required type="text" id="b_name" placeholder="e.g. 10TH CBSE MNG KL BATCH" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <input required type="text" id="b_name" placeholder="e.g. 10TH EXAM KILLER SSLC BATCH" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs font-bold">
                     </div>
-                    <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold py-3 rounded-xl mt-4 shadow-sm transition-all">Save Batch</button>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Syllabus / Program Category</label>
+                        <select id="b_syllabus" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs font-bold bg-white">
+                            <option value="CBSE">CBSE Syllabus</option>
+                            <option value="STATE">State Syllabus</option>
+                            <option value="EXAM KILLER">⚡ Exam Killer Program</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Class / Grade Category</label>
+                        <select id="b_class_category" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs font-bold bg-white">
+                            <option value="8TH">8th Class</option>
+                            <option value="9TH">9th Class</option>
+                            <option value="10TH">10th Class</option>
+                            <option value="11TH SCI">11th Science</option>
+                            <option value="11TH COM">11th Commerce</option>
+                            <option value="12TH SCI">12th Science</option>
+                            <option value="12TH COM">12th Commerce</option>
+                            <option value="EXAM KILLER">⚡ Exam Killer (All Streams)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold py-3 rounded-xl mt-4 shadow-sm transition-all text-sm">Save Batch</button>
                 </div>
             </form>
         `;
@@ -389,13 +436,14 @@ function showCreateModal() {
         }
 
         const categories = [
-            { val: '8TH', label: '8th Class (State & CBSE)' },
-            { val: '9TH', label: '9th Class (State & CBSE)' },
-            { val: '10TH', label: '10th Class (State & CBSE)' },
-            { val: '11TH SCI', label: '11th Science (State & CBSE)' },
-            { val: '11TH COM', label: '11th Commerce (State & CBSE)' },
-            { val: '12TH SCI', label: '12th Science (State & CBSE)' },
-            { val: '12TH COM', label: '12th Commerce (State & CBSE)' }
+            { val: '8TH', label: '8th Class' },
+            { val: '9TH', label: '9th Class' },
+            { val: '10TH', label: '10th Class' },
+            { val: '11TH SCI', label: '11th Science' },
+            { val: '11TH COM', label: '11th Commerce' },
+            { val: '12TH SCI', label: '12th Science' },
+            { val: '12TH COM', label: '12th Commerce' },
+            { val: 'EXAM KILLER', label: '⚡ Exam Killer (All Streams)' }
         ];
 
         const catOptionsHtml = categories.map(c => {
@@ -405,13 +453,19 @@ function showCreateModal() {
 
         document.getElementById('modal-body').innerHTML = `
             <!-- Quick Zoom Paste Auto-Fill -->
-            <div class="mb-4 p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl">
-                <label class="block text-xs font-extrabold text-amber-950 mb-1.5 flex items-center gap-1.5">
-                    <span>⚡ Quick Zoom Paste Auto-Fill</span>
+            <div class="mb-4 p-4 bg-amber-50/80 border border-amber-200 rounded-2xl shadow-xs">
+                <label class="block text-xs font-extrabold text-amber-950 mb-1 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">⚡ Quick Zoom Paste Auto-Fill</span>
+                    <span class="text-[10px] text-amber-700 font-semibold hidden sm:inline">Paste raw link or full WhatsApp invite</span>
                 </label>
-                <textarea id="z_paste" rows="2" placeholder="Paste full Zoom meeting invitation text here to auto-parse..." class="w-full px-3 py-2 border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono text-xs bg-white"></textarea>
-                <button type="button" onclick="parseZoom()" class="mt-2 text-xs bg-amber-400 hover:bg-amber-500 text-slate-950 px-3.5 py-1.5 rounded-lg font-bold shadow-sm transition-all">Auto Parse Link & Credentials</button>
-                <div id="z_error" class="text-red-600 text-xs mt-2 hidden font-bold"></div>
+                <textarea id="z_paste" rows="2" oninput="clientParseZoom(this.value)" placeholder="Paste full Zoom meeting invitation or raw link here to auto-parse..." class="w-full px-3 py-2 border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono text-xs bg-white"></textarea>
+                <div class="flex items-center gap-2 mt-2">
+                    <button type="button" onclick="parseZoom()" class="text-xs bg-amber-400 hover:bg-amber-500 text-slate-950 px-3.5 py-1.5 rounded-lg font-bold shadow-sm transition-all flex items-center gap-1">
+                        <span>🔍 Auto Parse Link & Credentials</span>
+                    </button>
+                    <span id="z_status" class="text-xs font-bold text-emerald-700 hidden"></span>
+                </div>
+                <div id="z_error" class="text-xs mt-2 hidden font-bold"></div>
             </div>
 
             <form id="createForm" onsubmit="submitSession(event)">
@@ -429,9 +483,10 @@ function showCreateModal() {
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Syllabus Filter</label>
                         <select id="s_syllabus_filter" onchange="onClassCategoryOrSyllabusChange()" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs font-bold">
-                            <option value="ALL">All Syllabuses</option>
+                            <option value="ALL">All Syllabuses / Programs</option>
                             <option value="CBSE">CBSE Batches Only</option>
                             <option value="STATE">STATE Batches Only</option>
+                            <option value="EXAM KILLER">⚡ Exam Killer Batches Only</option>
                         </select>
                     </div>
 
@@ -446,7 +501,7 @@ function showCreateModal() {
 
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-slate-700 mb-1">Class Topic / Subject</label>
-                        <input required type="text" id="s_topic" placeholder="e.g. 12th Physics - Ray Optics & Waves" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium">
+                        <input required type="text" id="s_topic" placeholder="e.g. 10th Math - Trigonometry & Quad Equations" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Date</label>
@@ -458,7 +513,7 @@ function showCreateModal() {
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-slate-700 mb-1">Zoom Meeting Link</label>
-                        <input required type="url" id="s_link" placeholder="https://zoom.us/j/..." class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium">
+                        <input required type="url" id="s_link" oninput="onZoomLinkInput(this.value)" placeholder="https://zoom.us/j/..." class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm font-medium">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Meeting ID</label>
@@ -493,23 +548,107 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
+function clientParseZoom(text) {
+    if (!text || !text.trim()) return;
+    text = text.trim();
+
+    // 1. Zoom link extraction
+    const linkMatch = text.match(/https:\/\/[a-zA-Z0-9.-]*zoom\.us\/[^\s*<>"')]+/i);
+    let zoomLink = linkMatch ? linkMatch[0].replace(/[\.,\*\>\)"'`]+$/, '') : '';
+
+    // Mask URL from text to prevent false positives from query strings
+    let cleanText = text;
+    if (zoomLink) {
+        cleanText = cleanText.replace(zoomLink, ' [ZOOM_LINK] ');
+    }
+
+    // 2. Meeting ID extraction
+    let meetingId = '';
+    const idLabelMatch = cleanText.match(/(?:meeting\s*id|webinar\s*id|conf\s*id|\bid)\s*[:=\-]?\s*\*?\s*([\d\s]{9,15})\b/i);
+    if (idLabelMatch) {
+        meetingId = idLabelMatch[1].trim().replace(/\s+/g, ' ');
+    } else if (zoomLink) {
+        const urlIdMatch = zoomLink.match(/zoom\.us\/(?:j|w|my)\/(\d{9,12})/i);
+        if (urlIdMatch) {
+            const rawId = urlIdMatch[1];
+            if (rawId.length === 11) {
+                meetingId = `${rawId.slice(0, 3)} ${rawId.slice(3, 7)} ${rawId.slice(7)}`;
+            } else if (rawId.length === 10) {
+                meetingId = `${rawId.slice(0, 3)} ${rawId.slice(3, 6)} ${rawId.slice(6)}`;
+            } else {
+                meetingId = rawId;
+            }
+        }
+    }
+
+    // 3. Passcode extraction
+    let passcode = '';
+    const passLabelMatch = cleanText.match(/(?:passcode|password|pass\s*code|\bpwd|\bpin|security\s*code)\s*[:=\-]?\s*\*?\s*([^\s*<>"'`]+)/i);
+    if (passLabelMatch) {
+        passcode = passLabelMatch[1].trim().replace(/[\.,\*\>\)"'`]+$/, '');
+    } else if (zoomLink) {
+        const urlPwdMatch = zoomLink.match(/[?&]pwd=([a-zA-Z0-9._~-]+)/i);
+
+        if (urlPwdMatch) {
+            try {
+                passcode = decodeURIComponent(urlPwdMatch[1]);
+            } catch(e) {
+                passcode = urlPwdMatch[1];
+            }
+        }
+    }
+
+    const linkInput = document.getElementById('s_link');
+    const idInput = document.getElementById('s_id');
+    const passInput = document.getElementById('s_pass');
+
+    if (linkInput && zoomLink) linkInput.value = zoomLink;
+    if (idInput && meetingId) idInput.value = meetingId;
+    if (passInput && passcode) passInput.value = passcode;
+
+    const err = document.getElementById('z_error');
+    if (err && zoomLink && meetingId) {
+        err.innerHTML = '<span class="text-emerald-700 font-bold flex items-center gap-1"><span>✅</span> Auto-parsed link & credentials!</span>';
+        err.classList.remove('hidden');
+    }
+}
+
+function onZoomLinkInput(val) {
+    if (!val) return;
+    clientParseZoom(val);
+}
+
 async function parseZoom() {
-    const text = document.getElementById('z_paste').value;
-    if (!text) return;
+    const textElem = document.getElementById('z_paste');
+    const text = textElem ? textElem.value.trim() : '';
+    if (!text) {
+        alert("Please paste the Zoom invitation or link in the box first.");
+        return;
+    }
+    
+    // Immediate client extraction
+    clientParseZoom(text);
+
+    // Call server endpoint for advanced extraction
     try {
         const res = await api('/api/zoom/parse', { method: 'POST', body: { text } });
-        if (res.success) {
-            document.getElementById('s_link').value = res.zoom_link || '';
-            document.getElementById('s_id').value = res.meeting_id || '';
-            document.getElementById('s_pass').value = res.passcode || '';
-            document.getElementById('z_error').classList.add('hidden');
-        } else {
+        if (res) {
+            if (res.zoom_link) document.getElementById('s_link').value = res.zoom_link;
+            if (res.meeting_id) document.getElementById('s_id').value = res.meeting_id;
+            if (res.passcode) document.getElementById('s_pass').value = res.passcode;
+
             const err = document.getElementById('z_error');
-            err.innerText = res.errors.join(' | ');
-            err.classList.remove('hidden');
+            if (res.zoom_link && res.meeting_id) {
+                err.innerHTML = '<span class="text-emerald-700 font-bold flex items-center gap-1"><span>✅</span> Successfully parsed! Link and credentials auto-filled.</span>';
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 5000);
+            } else if (res.errors && res.errors.length > 0) {
+                err.innerHTML = `<span class="text-amber-700 font-bold">${res.errors.join(' | ')}</span>`;
+                err.classList.remove('hidden');
+            }
         }
     } catch(e) {
-        console.error(e);
+        console.error("API parse error (client fallback used):", e);
     }
 }
 
@@ -518,6 +657,11 @@ async function submitBatch(e) {
     const payload = {
         name: document.getElementById('b_name').value
     };
+    const sylElem = document.getElementById('b_syllabus');
+    if (sylElem) payload.syllabus = sylElem.value;
+    const catElem = document.getElementById('b_class_category');
+    if (catElem) payload.class_category = catElem.value;
+
     try {
         await api('/api/batches', { method: 'POST', body: payload });
         closeModal();
@@ -526,6 +670,7 @@ async function submitBatch(e) {
         alert(err.detail || 'Error saving');
     }
 }
+
 
 async function submitSession(e) {
     e.preventDefault();

@@ -369,12 +369,14 @@ def build_mentor_guide_html():
     <h2>3. How to Filter Classes by Syllabus, Grade & Date</h2>
     <p>To navigate 100+ batches effortlessly, use the two-tier hierarchical filter system:</p>
 
-    <h3>Tier 1: CBSE vs. STATE Syllabus Toggle</h3>
-    <p>Use the large prominent tabs at the top of the interface:</p>
+    <h3>Tier 1: CBSE vs. STATE vs. EXAM KILLER Switcher</h3>
+    <p>Use the prominent three-way switcher at the top of the interface:</p>
     <ul>
         <li><strong>CBSE Tab (Blue Dot):</strong> Filters the view to all CBSE curriculum classes with a live badge showing total count.</li>
         <li><strong>STATE Tab (Green Dot):</strong> Filters the view to all Kerala State Board curriculum classes with live count.</li>
+        <li><strong>⚡ EXAM KILLER Tab (Rose Dot):</strong> Dedicated section for high-intensity Exam Killer crash courses, model exams, and question discussion sessions, kept strictly separate from regular daily classes.</li>
     </ul>
+
 
     <h3>Tier 2: Class / Grade Chips (Inside Syllabus)</h3>
     <p>Within your selected syllabus, tap any of the grade chips to view standard-specific sessions:</p>

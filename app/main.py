@@ -66,8 +66,9 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, Exception):
         manager.disconnect(websocket)
+
 
 # Web Routes for Mentor
 @app.get("/", response_class=HTMLResponse)

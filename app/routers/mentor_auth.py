@@ -121,18 +121,22 @@ def mentor_login(login_data: MentorLoginRequest, request: Request, db: Session =
 @router.post("/log-action")
 def log_mentor_action(log_data: MentorActionLogRequest, request: Request, db: Session = Depends(get_db), current_mentor: dict = Depends(get_current_mentor)):
     client_ip = request.client.host if request.client else "unknown"
-    log = MentorAccessLog(
-        mentor_name=current_mentor["name"],
-        assigned_class=current_mentor["assigned_class"],
-        session_id=log_data.session_id,
-        batch_name=log_data.batch_name,
-        action=log_data.action,
-        ip_address=client_ip,
-        details=log_data.details
-    )
-    db.add(log)
-    db.commit()
+    try:
+        log = MentorAccessLog(
+            mentor_name=current_mentor["name"],
+            assigned_class=current_mentor["assigned_class"],
+            session_id=log_data.session_id,
+            batch_name=log_data.batch_name,
+            action=log_data.action,
+            ip_address=client_ip,
+            details=log_data.details
+        )
+        db.add(log)
+        db.commit()
+    except Exception as e:
+        db.rollback()
     return {"status": "success"}
+
 
 @router.get("/me")
 def get_mentor_profile(current_mentor: dict = Depends(get_current_mentor)):

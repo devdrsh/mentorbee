@@ -36,8 +36,15 @@ async def create_session(session: ClassSessionCreate, db: Session = Depends(get_
 
 def apply_class_filters(query, syllabus: Optional[str], class_category: Optional[str], class_number: Optional[str]):
     query = query.join(ClassSession.batch)
-    if syllabus and syllabus.upper() in ["STATE", "CBSE"]:
-        query = query.filter(Batch.syllabus == syllabus.upper())
+    if syllabus and syllabus.upper() not in ["ALL", "NONE", ""]:
+        syl_clean = syllabus.upper().strip()
+        if syl_clean in ["EXAM KILLER", "EXAM_KILLER", "EXAMKILLER"]:
+            query = query.filter(
+                (Batch.syllabus.in_(["EXAM KILLER", "EXAM_KILLER", "EXAMKILLER"])) |
+                (Batch.name.ilike("%EXAM%KILLER%"))
+            )
+        else:
+            query = query.filter(Batch.syllabus == syl_clean)
     if class_category:
         cats = [c.strip().upper() for c in class_category.split(",") if c.strip()]
         if cats and "ALL" not in cats:
@@ -51,6 +58,7 @@ def apply_class_filters(query, syllabus: Optional[str], class_category: Optional
     elif class_number:
         query = query.filter(Batch.class_number == class_number.upper())
     return query
+
 
 @router.get("", response_model=List[ClassSessionResponse])
 def get_sessions(

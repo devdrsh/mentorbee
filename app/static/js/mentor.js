@@ -96,18 +96,31 @@ function switchSyllabus(syllabus) {
     
     const tabCbse = document.getElementById('tab-syllabus-cbse');
     const tabState = document.getElementById('tab-syllabus-state');
+    const tabExamKiller = document.getElementById('tab-syllabus-exam-killer');
     const indicator = document.getElementById('active-syllabus-indicator');
+
+    const inactiveClass = 'syllabus-tab-inactive py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation';
+    const activeClass = 'syllabus-tab-active py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation';
+    const activeExamClass = 'syllabus-tab-active-exam py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-1.5 border touch-manipulation';
+
+    if (tabCbse) tabCbse.className = inactiveClass;
+    if (tabState) tabState.className = inactiveClass;
+    if (tabExamKiller) tabExamKiller.className = inactiveClass;
     
     if (syllabus === 'CBSE') {
-        tabCbse.className = 'syllabus-tab-active py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation';
-        tabState.className = 'syllabus-tab-inactive py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation';
+        if (tabCbse) tabCbse.className = activeClass;
         if (indicator) {
             indicator.textContent = 'CBSE Syllabus';
             indicator.className = 'text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 shadow-sm hidden sm:inline-block';
         }
+    } else if (syllabus === 'EXAM KILLER') {
+        if (tabExamKiller) tabExamKiller.className = activeExamClass;
+        if (indicator) {
+            indicator.textContent = '⚡ EXAM KILLER SECTION';
+            indicator.className = 'text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-rose-50 border border-rose-300 text-rose-900 shadow-sm hidden sm:inline-block';
+        }
     } else {
-        tabState.className = 'syllabus-tab-active py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation';
-        tabCbse.className = 'syllabus-tab-inactive py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation';
+        if (tabState) tabState.className = activeClass;
         if (indicator) {
             indicator.textContent = 'STATE Syllabus';
             indicator.className = 'text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 shadow-sm hidden sm:inline-block';
@@ -167,21 +180,26 @@ async function updateBadgeCounts() {
     try {
         let cbseUrl = `/api/sessions/${currentTimeTab}?syllabus=CBSE`;
         let stateUrl = `/api/sessions/${currentTimeTab}?syllabus=STATE`;
+        let examUrl = `/api/sessions/${currentTimeTab}?syllabus=EXAM%20KILLER`;
         
         if (currentClassFilter && currentClassFilter !== 'ALL') {
             cbseUrl += `&class_category=${encodeURIComponent(currentClassFilter)}`;
             stateUrl += `&class_category=${encodeURIComponent(currentClassFilter)}`;
+            examUrl += `&class_category=${encodeURIComponent(currentClassFilter)}`;
         }
 
-        const [cbseRes, stateRes] = await Promise.all([
+        const [cbseRes, stateRes, examRes] = await Promise.all([
             fetch(cbseUrl),
-            fetch(stateUrl)
+            fetch(stateUrl),
+            fetch(examUrl)
         ]);
         const cbseData = await cbseRes.json();
         const stateData = await stateRes.json();
+        const examData = await examRes.json();
 
         const badgeCbse = document.getElementById('badge-cbse-count');
         const badgeState = document.getElementById('badge-state-count');
+        const badgeExam = document.getElementById('badge-exam-killer-count');
 
         if (badgeCbse) {
             if (cbseData && cbseData.length > 0) {
@@ -200,10 +218,20 @@ async function updateBadgeCounts() {
                 badgeState.classList.add('hidden');
             }
         }
+
+        if (badgeExam) {
+            if (examData && examData.length > 0) {
+                badgeExam.textContent = examData.length;
+                badgeExam.classList.remove('hidden');
+            } else {
+                badgeExam.classList.add('hidden');
+            }
+        }
     } catch (e) {
         console.error('Error fetching badge counts:', e);
     }
 }
+
 
 async function logMentorAction(action, sessionId, batchName, details = '') {
     try {
@@ -324,14 +352,20 @@ function renderFilteredSessions() {
         const btnId = `copy-btn-${cls.id || index}`;
         const syllabus = cls.batch && cls.batch.syllabus ? cls.batch.syllabus : currentSyllabus;
         const isCbse = syllabus === 'CBSE';
+        const isExamKiller = syllabus === 'EXAM KILLER' || (cls.batch && cls.batch.name && cls.batch.name.includes('EXAM KILLER'));
 
         const syllabusBadge = isCbse 
             ? `<span class="inline-flex items-center gap-1 bg-blue-50 text-blue-900 border border-blue-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>CBSE
                </span>`
-            : `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>STATE
-               </span>`;
+            : (isExamKiller
+                ? `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-900 border border-rose-300 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                     <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>⚡ EXAM KILLER
+                   </span>`
+                : `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>STATE
+                   </span>`);
+
 
         const classCat = cls.class_category || (cls.batch ? cls.batch.class_category : '') || (cls.batch ? cls.batch.class_number : '');
         const classBadge = classCat ? `

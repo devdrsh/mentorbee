@@ -64,16 +64,18 @@ You can search across any of the following parameters with zero page reloads:
 
 Because every mentor has access to all batches, the dashboard provides a **two-tier structured filter system** for fast navigation.
 
-### 4.1 Primary Tier: CBSE vs. STATE Syllabus
-At the very top of the dashboard, use the primary toggle tabs:
+### 4.1 Primary Tier: CBSE vs. STATE vs. EXAM KILLER
+At the very top of the dashboard, use the primary switcher tabs:
 
 ```
-[  🔵 CBSE  (14)  ]   [  🟢 STATE  (18)  ]
+[  🔵 CBSE  (14)  ]   [  🟢 STATE  (18)  ]   [  ⚡ EXAM KILLER  (6)  ]
 ```
 
 * **CBSE Tab**: Displays only CBSE affiliated batches and classes.
 * **STATE Tab**: Displays only Kerala State Board batches and classes.
-* Dynamic counter badges indicate the exact number of active sessions available in each syllabus.
+* **⚡ EXAM KILLER Tab**: Dedicated section for high-intensity Exam Killer crash batches, model exams, and revision discussions (separated completely from regular classes).
+* Dynamic counter badges indicate the exact number of active sessions available in each section.
+
 
 ---
 
