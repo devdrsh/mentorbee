@@ -3,9 +3,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import os
+import asyncio
 
 from app.routers import admin, batches, sessions, zoom, mentor_auth
 from app.websockets import manager
+from app.services.keep_alive import start_keep_alive
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
@@ -46,6 +48,11 @@ def health_check():
         "service": "MentorBee Class Link Management System",
         "version": "1.0.0"
     }
+
+@app.on_event("startup")
+async def on_startup():
+    # Start the keep-alive task to prevent Render inactivity sleep
+    asyncio.create_task(start_keep_alive())
 
 app.include_router(admin.router)
 app.include_router(batches.router)

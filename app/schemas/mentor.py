@@ -3,9 +3,11 @@ from typing import Optional
 from datetime import datetime
 
 class MentorLoginRequest(BaseModel):
-    name: str
-    assigned_class: str  # "8TH", "9TH", "10TH", "11TH SCI", "11TH COM", "12TH SCI", "12TH COM", "ALL"
-    passcode: str
+    name: str  # Mandatory staff name for audit logs
+    username: Optional[str] = "mentor"
+    assigned_class: Optional[str] = "ALL"  # Universal access for all mentors
+    passcode: Optional[str] = None
+    password: Optional[str] = None
 
 class MentorTokenResponse(BaseModel):
     access_token: str

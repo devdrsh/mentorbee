@@ -55,21 +55,33 @@ def get_current_mentor(request: Request):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+COMMON_MENTOR_PASSWORD = "agentBEE"
+LEGACY_PASSCODES = ["AGENTBEE0809", "AGENTBEE", "agentBEE", "MENTORALL", "BEEALL"]
+
 @router.post("/login", response_model=MentorTokenResponse)
 def mentor_login(login_data: MentorLoginRequest, request: Request, db: Session = Depends(get_db)):
-    assigned_class = login_data.assigned_class.strip().upper()
-    passcode_input = login_data.passcode.strip()
-    
-    # Verify passcode (either master passcode or class-specific passcode)
-    allowed_passcodes = CLASS_PASSCODES.get(assigned_class, [STAFF_PASSCODE])
-    if passcode_input != STAFF_PASSCODE and passcode_input.upper() not in allowed_passcodes:
+    # 1. Enforce mandatory Staff Name
+    name = (login_data.name or "").strip().title()
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your Full Name is mandatory. Admin requires your name to track who accessed and shared meeting links."
+        )
+
+    # 2. Verify common password (agentBEE)
+    passcode_input = (login_data.password or login_data.passcode or "").strip()
+    if (
+        passcode_input != COMMON_MENTOR_PASSWORD 
+        and passcode_input.lower() != COMMON_MENTOR_PASSWORD.lower() 
+        and passcode_input.upper() not in LEGACY_PASSCODES
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid verification passcode for {assigned_class}. Please enter the correct staff passcode."
+            detail="Invalid mentor password. Please enter the common mentor password: agentBEE"
         )
     
-    name = login_data.name.strip().upper()
-    assigned_class = login_data.assigned_class.strip().upper()
+    # Universal access for all mentors
+    assigned_class = "ALL"
     client_ip = request.client.host if request.client else "unknown"
 
     # Find or create mentor user record
@@ -85,13 +97,13 @@ def mentor_login(login_data: MentorLoginRequest, request: Request, db: Session =
         mentor.assigned_class = assigned_class
         mentor.last_login_at = datetime.utcnow()
     
-    # Record Login Audit Log
+    # Record Login Audit Log with mandatory name
     log = MentorAccessLog(
         mentor_name=name,
         assigned_class=assigned_class,
         action="LOGIN",
         ip_address=client_ip,
-        details=f"Staff logged in for class {assigned_class}"
+        details=f"Staff '{name}' logged in (Universal Access)"
     )
     db.add(log)
     db.commit()

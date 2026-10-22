@@ -27,6 +27,20 @@ Render provides free SSL, automated Git deployments, and instant background work
 7. Click **Create Web Service**.
 8. Render will build and deploy the app. Once ready, you'll receive your live URL (e.g., `https://mentorbee-meeting-system.onrender.com`).
 
+### ⚡ Critical: Solving Render Free Tier Inactivity Sleep (Auto-Spindown)
+Render's free tier automatically spins down (sleeps) instances after 15 minutes of inactivity. When asleep, mentors experience 50-70 second cold start delays or timeouts. Here is how this is permanently solved:
+
+#### Solution A: Built-in In-App Auto-Pinger (Automatic)
+The application includes a background worker (`app/services/keep_alive.py`) that pings `/api/health` every 9 minutes. When deployed on Render, `RENDER_EXTERNAL_URL` is automatically detected and self-pinged to prevent sleep.
+
+#### Solution B: Free External Monitoring Pinger (UptimeRobot — 100% Guaranteed 24/7)
+For guaranteed continuous uptime across container restarts:
+1. Open free account at **[UptimeRobot.com](https://uptimerobot.com)**.
+2. Click **Add New Monitor** → select **HTTP(s)**.
+3. Enter your Render URL: `https://your-service-name.onrender.com/api/health`.
+4. Set monitoring interval to **5 minutes** or **10 minutes**.
+5. Save monitor. UptimeRobot will ping the service continuously, keeping your Render app warm 24/7/365 without cost!
+
 ---
 
 ## 🚂 Option 2: Railway.app Hosting

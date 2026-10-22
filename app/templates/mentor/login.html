@@ -69,10 +69,15 @@
                 <span id="error-message">Invalid passcode or details</span>
             </div>
 
-            <form id="mentor-login-form" class="space-y-5">
-                <!-- Name -->
+            <form id="mentor-login-form" class="space-y-4">
+                <!-- 1. Mandatory Full Name -->
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Your Full Name</label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
+                        <span>Your Full Name</span>
+                        <span class="text-amber-400 font-extrabold text-[10px] px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/25 normal-case">
+                            * Mandatory for Audit
+                        </span>
+                    </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,47 +87,36 @@
                         <input type="text" id="mentor-name" required placeholder="e.g. Rahul Sharma / Staff Name"
                             class="w-full bg-slate-900/60 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-colors">
                     </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Admin will record this name to track who accessed and shared class links.</p>
                 </div>
 
-                <!-- Class Selection -->
+                <!-- 2. Common Username -->
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Select Your Assigned Class</label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Common Username</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
-                        <select id="mentor-class" required
-                            class="w-full bg-slate-900/60 border border-slate-700 rounded-xl pl-10 pr-8 py-3 text-sm text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-colors appearance-none cursor-pointer">
-                            <option value="8TH">8th Class (State & CBSE Batches)</option>
-                            <option value="9TH">9th Class (State & CBSE Batches)</option>
-                            <option value="10TH">10th Class (State & CBSE Batches)</option>
-                            <option value="11TH SCI">11th Science (State & CBSE Batches)</option>
-                            <option value="11TH COM">11th Commerce (State & CBSE Batches)</option>
-                            <option value="12TH SCI">12th Science (State & CBSE Batches)</option>
-                            <option value="12TH COM">12th Commerce (State & CBSE Batches)</option>
-                            <option value="ALL">All Classes (Full Access)</option>
-                        </select>
-                        <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
+                        <input type="text" id="mentor-username" value="mentor" placeholder="mentor"
+                            class="w-full bg-slate-900/60 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-colors">
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-1">You will only have access to sessions and batches for this standard.</p>
                 </div>
 
-                <!-- Passcode -->
+                <!-- 3. Password (agentBEE) -->
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Staff Verification Passcode</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Mentor Password</label>
+                        <span class="text-[11px] text-amber-300/90 font-mono font-bold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded">agentBEE</span>
+                    </div>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
                         </div>
-                        <input type="password" id="mentor-passcode" required placeholder="Enter MentorBee Staff Passcode"
+                        <input type="password" id="mentor-passcode" required placeholder="Enter password (agentBEE)"
                             class="w-full bg-slate-900/60 border border-slate-700 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-colors">
                         <button type="button" onclick="togglePasscodeVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-amber-400">
                             <svg id="eye-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,14 +129,14 @@
                         <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                         </svg>
-                        <span>Protected: Required for Zoom ID security & link sharing accountability.</span>
+                        <span>Universal Access: All State & CBSE batch links are unlocked for all mentors.</span>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" id="submit-btn"
-                    class="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/25 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
-                    <span>Access Class Sessions</span>
+                    class="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-extrabold rounded-xl shadow-lg shadow-amber-500/25 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span>Access All Class Sessions</span>
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                     </svg>
@@ -180,14 +174,27 @@
             submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full"></span> Verifying...';
 
             const name = document.getElementById('mentor-name').value.trim();
-            const assigned_class = document.getElementById('mentor-class').value;
+            const username = document.getElementById('mentor-username').value.trim() || 'mentor';
             const passcode = document.getElementById('mentor-passcode').value.trim();
+
+            if (!name) {
+                errorMessage.textContent = 'Please enter your Full Name. Admin requires your name for accountability.';
+                errorAlert.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Access All Class Sessions</span><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+                return;
+            }
 
             try {
                 const res = await fetch('/api/mentor/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, assigned_class, passcode })
+                    body: JSON.stringify({ 
+                        name: name, 
+                        username: username, 
+                        passcode: passcode,
+                        assigned_class: 'ALL'
+                    })
                 });
 
                 const data = await res.json();
@@ -195,10 +202,10 @@
                     throw new Error(data.detail || 'Login failed. Please verify credentials.');
                 }
 
-                // Save token and info
+                // Save token and info with Universal Access
                 localStorage.setItem('mentor_token', data.access_token);
                 localStorage.setItem('mentor_name', data.name);
-                localStorage.setItem('mentor_class', data.assigned_class);
+                localStorage.setItem('mentor_class', 'ALL');
 
                 // Redirect to dashboard
                 window.location.href = '/';
@@ -207,7 +214,7 @@
                 errorAlert.classList.remove('hidden');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span>Access Class Sessions</span><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+                submitBtn.innerHTML = '<span>Access All Class Sessions</span><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
             }
         });
     </script>

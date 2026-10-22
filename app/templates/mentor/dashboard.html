@@ -148,7 +148,7 @@
                 <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 text-amber-950 px-2.5 py-1 rounded-xl text-xs font-bold shadow-xs">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span id="header-mentor-name" class="font-extrabold truncate max-w-[110px] sm:max-w-[160px]">Staff</span>
-                    <span id="header-mentor-class" class="bg-amber-200 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-md font-black uppercase">8TH</span>
+                    <span id="header-mentor-class" class="bg-amber-200 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-md font-black uppercase">ALL CLASSES</span>
                 </div>
                 
                 <button onclick="logoutMentor()" title="Logout" class="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all">
@@ -164,7 +164,7 @@
     <main class="max-w-2xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-6 flex-1">
         
         <!-- Primary Syllabus Switcher Tabs (CBSE vs STATE) -->
-        <div class="p-1.5 bg-amber-100/60 border border-amber-200/90 rounded-2xl sm:rounded-3xl grid grid-cols-2 gap-1.5 mb-5 shadow-inner">
+        <div class="p-1.5 bg-amber-100/60 border border-amber-200/90 rounded-2xl sm:rounded-3xl grid grid-cols-2 gap-1.5 mb-4 shadow-inner">
             <button id="tab-syllabus-cbse" onclick="switchSyllabus('CBSE')" 
                 class="syllabus-tab-active py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-extrabold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center justify-center gap-2 border touch-manipulation">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
@@ -177,6 +177,32 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                 <span>STATE</span>
                 <span id="badge-state-count" class="hidden text-[11px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-black">0</span>
+            </button>
+        </div>
+
+        <!-- Real-Time Search Bar -->
+        <div class="relative mb-4">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input 
+                type="text" 
+                id="mentor-search-input" 
+                oninput="handleSearch(this.value)" 
+                placeholder="Search by topic, batch name, subject, or time..." 
+                class="w-full bg-white border border-amber-200/90 rounded-2xl pl-10 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 font-semibold focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300/40 shadow-xs transition-all"
+            />
+            <button 
+                id="search-clear-btn" 
+                onclick="clearSearch()" 
+                type="button" 
+                title="Clear Search"
+                class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-rose-500 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
             </button>
         </div>
 
@@ -201,9 +227,9 @@
                 </span>
             </div>
 
-            <!-- Grade / Class Filter Chips (All, 8th, 9th, 10th, 11th, 12th) -->
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
-                <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider pl-1 flex-shrink-0">Grade:</span>
+            <!-- Grade / Class Filter Chips for Universal Access -->
+            <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+                <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider pl-1 flex-shrink-0">Class:</span>
                 <button onclick="switchClassFilter('')" id="chip-all" class="chip-active px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
                     All Classes
                 </button>
@@ -216,11 +242,17 @@
                 <button onclick="switchClassFilter('10TH')" id="chip-10TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
                     10th
                 </button>
-                <button onclick="switchClassFilter('11TH')" id="chip-11TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
-                    11th
+                <button onclick="switchClassFilter('11TH SCI')" id="chip-11TH-SCI" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    11th Sci
                 </button>
-                <button onclick="switchClassFilter('12TH')" id="chip-12TH" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
-                    12th
+                <button onclick="switchClassFilter('11TH COM')" id="chip-11TH-COM" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    11th Com
+                </button>
+                <button onclick="switchClassFilter('12TH SCI')" id="chip-12TH-SCI" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    12th Sci
+                </button>
+                <button onclick="switchClassFilter('12TH COM')" id="chip-12TH-COM" class="chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">
+                    12th Com
                 </button>
             </div>
         </div>

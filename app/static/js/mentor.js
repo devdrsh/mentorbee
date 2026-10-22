@@ -2,8 +2,10 @@ let currentSyllabus = 'CBSE';
 let currentTimeTab = 'today';
 let mentorToken = localStorage.getItem('mentor_token');
 let mentorName = localStorage.getItem('mentor_name') || 'Staff';
-let mentorClass = localStorage.getItem('mentor_class') || '8TH';
-let currentClassFilter = mentorClass !== 'ALL' ? mentorClass : '';
+let mentorClass = 'ALL'; // Universal access: every mentor sees all sessions
+let currentClassFilter = ''; // Empty string = all classes
+let searchQuery = '';
+let loadedSessionsCache = [];
 let socket = null;
 let toastTimeout = null;
 
@@ -18,9 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameEl = document.getElementById('header-mentor-name');
     const classEl = document.getElementById('header-mentor-class');
     if (nameEl) nameEl.textContent = mentorName;
-    if (classEl) classEl.textContent = mentorClass;
+    if (classEl) classEl.textContent = 'ALL CLASSES';
 
-    // Setup Grade chips based on assigned class
+    // Setup Grade chips for all classes
     setupGradeFilterChips();
 
     loadClasses();
@@ -41,35 +43,51 @@ function logoutMentor() {
     window.location.href = '/mentor/login';
 }
 
-function setupGradeFilterChips() {
-    const chipsContainer = document.querySelector('.overflow-x-auto');
-    if (!chipsContainer) return;
-
-    if (mentorClass !== 'ALL') {
-        // If assigned a specific class/stream, hide generic chips or show current scoped class
-        currentClassFilter = mentorClass;
-        chipsContainer.innerHTML = `
-            <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider pl-1 flex-shrink-0">Assigned Scope:</span>
-            <div class="chip-active px-3 py-1.5 rounded-xl border font-bold flex items-center gap-1.5 flex-shrink-0">
-                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
-                <span>Class ${mentorClass}</span>
-            </div>
-            <span class="text-slate-500 text-[11px] italic pl-1 flex-shrink-0">(Includes all State & CBSE Batches)</span>
-        `;
-    } else {
-        // Multi-class super mentor
-        chipsContainer.innerHTML = `
-            <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider pl-1 flex-shrink-0">Grade:</span>
-            <button onclick="switchClassFilter('')" id="chip-all" class="${!currentClassFilter ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">All Classes</button>
-            <button onclick="switchClassFilter('8TH')" id="chip-8TH" class="${currentClassFilter==='8TH' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">8th</button>
-            <button onclick="switchClassFilter('9TH')" id="chip-9TH" class="${currentClassFilter==='9TH' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">9th</button>
-            <button onclick="switchClassFilter('10TH')" id="chip-10TH" class="${currentClassFilter==='10TH' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">10th</button>
-            <button onclick="switchClassFilter('11TH SCI')" id="chip-11TH-SCI" class="${currentClassFilter==='11TH SCI' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">11th Sci</button>
-            <button onclick="switchClassFilter('11TH COM')" id="chip-11TH-COM" class="${currentClassFilter==='11TH COM' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">11th Com</button>
-            <button onclick="switchClassFilter('12TH SCI')" id="chip-12TH-SCI" class="${currentClassFilter==='12TH SCI' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">12th Sci</button>
-            <button onclick="switchClassFilter('12TH COM')" id="chip-12TH-COM" class="${currentClassFilter==='12TH COM' ? 'chip-active' : 'chip-inactive'} px-3 py-1.5 rounded-xl border transition-all flex-shrink-0">12th Com</button>
-        `;
+function handleSearch(val) {
+    searchQuery = (val || '').trim().toLowerCase();
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) {
+        if (searchQuery) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
     }
+    renderFilteredSessions();
+}
+
+function clearSearch() {
+    const input = document.getElementById('mentor-search-input');
+    if (input) input.value = '';
+    searchQuery = '';
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    renderFilteredSessions();
+}
+
+function setupGradeFilterChips() {
+    const chips = [
+        { label: 'All Classes', value: '' },
+        { label: '8th', value: '8TH' },
+        { label: '9th', value: '9TH' },
+        { label: '10th', value: '10TH' },
+        { label: '11th Sci', value: '11TH SCI' },
+        { label: '11th Com', value: '11TH COM' },
+        { label: '12th Sci', value: '12TH SCI' },
+        { label: '12th Com', value: '12TH COM' }
+    ];
+
+    chips.forEach(chip => {
+        const chipId = chip.value ? `chip-${chip.value.replace(/\s+/g, '-')}` : 'chip-all';
+        const el = document.getElementById(chipId);
+        if (el) {
+            if (currentClassFilter === chip.value) {
+                el.className = 'chip-active px-3 py-1.5 rounded-xl border transition-all flex-shrink-0';
+            } else {
+                el.className = 'chip-inactive px-3 py-1.5 rounded-xl border transition-all flex-shrink-0';
+            }
+        }
+    });
 }
 
 function switchSyllabus(syllabus) {
@@ -225,137 +243,161 @@ async function loadClasses(isBackground = false) {
         const classes = await res.json();
         
         document.getElementById('loader').classList.add('hidden');
+        loadedSessionsCache = Array.isArray(classes) ? classes : [];
         
-        // Update count badges for the active view
-        const countBadge = document.getElementById(currentTimeTab === 'today' ? 'today-count' : 'upcoming-count');
-        if (countBadge) {
-            if (classes.length > 0) {
-                countBadge.textContent = classes.length;
-                countBadge.classList.remove('hidden');
-            } else {
-                countBadge.classList.add('hidden');
-            }
-        }
-        
-        if (classes.length === 0) {
-            document.getElementById('class-list').innerHTML = '';
-            const emptyState = document.getElementById('empty-state');
-            const emptyTitle = document.getElementById('empty-title');
-            const emptyDesc = document.getElementById('empty-desc');
-            
-            if (emptyTitle) {
-                emptyTitle.textContent = `No ${currentSyllabus} classes ${currentTimeTab === 'today' ? 'today' : 'upcoming'}`;
-            }
-            if (emptyDesc) {
-                const filterNote = currentClassFilter ? ` for Class ${currentClassFilter}` : '';
-                emptyDesc.textContent = `There are no scheduled ${currentSyllabus}${filterNote} sessions in this list right now.`;
-            }
-            emptyState.classList.remove('hidden');
-            return;
-        }
-        
-        document.getElementById('empty-state').classList.add('hidden');
-        const list = document.getElementById('class-list');
-        list.innerHTML = '';
-        
-        classes.forEach((cls, index) => {
-            const updatedAt = formatUpdatedAt(cls.updated_at);
-            
-            const card = document.createElement('div');
-            card.className = "session-card bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-amber-200/70 shadow-sm relative overflow-hidden";
-            
-            // Format time in 12-hour IST format
-            let displayTime = cls.start_time;
-            if (cls.start_time && cls.start_time.includes(':')) {
-                const timeTokens = cls.start_time.split(':');
-                let h = parseInt(timeTokens[0]);
-                let m = timeTokens[1];
-                let ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12 || 12;
-                displayTime = `${h.toString().padStart(2, '0')}:${m} ${ampm} IST`;
-            }
-
-            const formattedDate = currentTimeTab === 'upcoming' ? formatDisplayDate(cls.class_date) : '';
-            const btnId = `copy-btn-${cls.id || index}`;
-            const syllabus = cls.batch && cls.batch.syllabus ? cls.batch.syllabus : currentSyllabus;
-            const isCbse = syllabus === 'CBSE';
-
-            const syllabusBadge = isCbse 
-                ? `<span class="inline-flex items-center gap-1 bg-blue-50 text-blue-900 border border-blue-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>CBSE
-                   </span>`
-                : `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>STATE
-                   </span>`;
-
-            const classCat = cls.class_category || (cls.batch ? cls.batch.class_category : '') || (cls.batch ? cls.batch.class_number : '');
-            const classBadge = classCat ? `
-                <span class="inline-flex items-center bg-amber-50 text-amber-900 border border-amber-200/80 text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                    ${classCat}
-                </span>` : '';
-
-            const batchName = cls.batch ? cls.batch.name : 'Batch';
-
-            card.innerHTML = `
-                <!-- Top Row: Syllabus Badge, Class Badge, Batch Name and Updated Timestamp -->
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        ${syllabusBadge}
-                        ${classBadge}
-                        <span class="inline-flex items-center bg-amber-100/90 text-amber-900 border border-amber-300/50 text-[11px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 rounded-full uppercase tracking-wider">
-                            ${batchName}
-                        </span>
-                        ${formattedDate ? `
-                        <span class="inline-flex items-center bg-slate-100 text-slate-700 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full">
-                            ${formattedDate}
-                        </span>` : ''}
-                    </div>
-                    
-                    ${updatedAt ? `
-                    <span class="text-[10px] sm:text-xs font-semibold text-slate-400 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
-                        <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span>UPDATED ${updatedAt}</span>
-                    </span>` : ''}
-                </div>
-
-                <!-- Topic Heading -->
-                <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 uppercase tracking-tight break-words">
-                    ${cls.topic}
-                </h3>
-
-                <!-- Time Details -->
-                <div class="text-slate-600 font-semibold text-xs sm:text-sm mt-2 flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>${displayTime}</span>
-                </div>
-
-                <!-- Responsive Action Buttons -->
-                <div class="mt-4 sm:mt-5 grid grid-cols-2 gap-2.5 sm:gap-3">
-                    <button id="${btnId}" onclick='handleCopy("${btnId}", ${JSON.stringify(cls.formatted_message || "").replace(/'/g, "&#39;")}, ${cls.id || 0}, "${batchName.replace(/"/g, "")}")' 
-                        class="w-full bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-950 font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm touch-manipulation select-none">
-                        <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                        <span class="btn-label truncate">Copy Message</span>
-                    </button>
-                    
-                    <a href="${cls.zoom_link}" target="_blank" rel="noopener noreferrer" onclick='handleJoinZoom(${cls.id || 0}, "${batchName.replace(/"/g, "")}")'
-                        class="w-full bg-white border-2 border-amber-200/90 hover:border-amber-400 hover:bg-amber-50/50 active:bg-amber-100/50 text-slate-800 font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm touch-manipulation select-none">
-                        <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M4.5 10.5L9 6v3h6v3H9v3l-4.5-4.5zM21 4H3a1 1 0 00-1 1v14a1 1 0 001 1h18a1 1 0 001-1V5a1 1 0 00-1-1zm-1 14H4V6h16v12z"/></svg>
-                        <span class="truncate">Join Zoom</span>
-                    </a>
-                </div>
-            `;
-            list.appendChild(card);
-        });
+        renderFilteredSessions();
     } catch(err) {
         console.error('Error loading classes:', err);
     }
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function renderFilteredSessions() {
+    const list = document.getElementById('class-list');
+    const emptyState = document.getElementById('empty-state');
+    const emptyTitle = document.getElementById('empty-title');
+    const emptyDesc = document.getElementById('empty-desc');
+    
+    // Apply client-side search query
+    let filtered = loadedSessionsCache;
+    if (searchQuery) {
+        filtered = loadedSessionsCache.filter(cls => {
+            const batchName = (cls.batch ? cls.batch.name : '').toLowerCase();
+            const topic = (cls.topic || '').toLowerCase();
+            const startTime = (cls.start_time || '').toLowerCase();
+            const category = (cls.class_category || (cls.batch ? cls.batch.class_category : '') || (cls.batch ? cls.batch.class_number : '') || '').toLowerCase();
+            return batchName.includes(searchQuery) || topic.includes(searchQuery) || startTime.includes(searchQuery) || category.includes(searchQuery);
+        });
+    }
+
+    // Update count badge for active time tab
+    const countBadge = document.getElementById(currentTimeTab === 'today' ? 'today-count' : 'upcoming-count');
+    if (countBadge) {
+        if (loadedSessionsCache.length > 0) {
+            countBadge.textContent = loadedSessionsCache.length;
+            countBadge.classList.remove('hidden');
+        } else {
+            countBadge.classList.add('hidden');
+        }
+    }
+
+    if (filtered.length === 0) {
+        list.innerHTML = '';
+        if (emptyTitle && emptyDesc) {
+            if (searchQuery) {
+                emptyTitle.textContent = "No matching classes found";
+                emptyDesc.innerHTML = `No ${currentSyllabus} sessions match "<b>${escapeHtml(searchQuery)}</b>". <br><button onclick="clearSearch()" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-xl transition-all">Clear Search Query</button>`;
+            } else {
+                const filterNote = currentClassFilter ? ` for Class ${currentClassFilter}` : '';
+                emptyTitle.textContent = `No ${currentSyllabus} classes ${currentTimeTab === 'today' ? 'today' : 'upcoming'}`;
+                emptyDesc.textContent = `There are no scheduled ${currentSyllabus}${filterNote} sessions in this list right now.`;
+            }
+        }
+        emptyState.classList.remove('hidden');
+        return;
+    }
+
+    emptyState.classList.add('hidden');
+    list.innerHTML = '';
+
+    filtered.forEach((cls, index) => {
+        const updatedAt = formatUpdatedAt(cls.updated_at);
+        const card = document.createElement('div');
+        card.className = "session-card bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-amber-200/70 shadow-sm relative overflow-hidden";
+        
+        // Format time in 12-hour IST format
+        let displayTime = cls.start_time;
+        if (cls.start_time && cls.start_time.includes(':')) {
+            const timeTokens = cls.start_time.split(':');
+            let h = parseInt(timeTokens[0]);
+            let m = timeTokens[1];
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            displayTime = `${h.toString().padStart(2, '0')}:${m} ${ampm} IST`;
+        }
+
+        const formattedDate = currentTimeTab === 'upcoming' ? formatDisplayDate(cls.class_date) : '';
+        const btnId = `copy-btn-${cls.id || index}`;
+        const syllabus = cls.batch && cls.batch.syllabus ? cls.batch.syllabus : currentSyllabus;
+        const isCbse = syllabus === 'CBSE';
+
+        const syllabusBadge = isCbse 
+            ? `<span class="inline-flex items-center gap-1 bg-blue-50 text-blue-900 border border-blue-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>CBSE
+               </span>`
+            : `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] sm:text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>STATE
+               </span>`;
+
+        const classCat = cls.class_category || (cls.batch ? cls.batch.class_category : '') || (cls.batch ? cls.batch.class_number : '');
+        const classBadge = classCat ? `
+            <span class="inline-flex items-center bg-amber-50 text-amber-900 border border-amber-200/80 text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                ${classCat}
+            </span>` : '';
+
+        const batchName = cls.batch ? cls.batch.name : 'Batch';
+
+        card.innerHTML = `
+            <!-- Top Row: Syllabus Badge, Class Badge, Batch Name and Updated Timestamp -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    ${syllabusBadge}
+                    ${classBadge}
+                    <span class="inline-flex items-center bg-amber-100/90 text-amber-900 border border-amber-300/50 text-[11px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 rounded-full uppercase tracking-wider">
+                        ${batchName}
+                    </span>
+                    ${formattedDate ? `
+                    <span class="inline-flex items-center bg-slate-100 text-slate-700 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full">
+                        ${formattedDate}
+                    </span>` : ''}
+                </div>
+                
+                ${updatedAt ? `
+                <span class="text-[10px] sm:text-xs font-semibold text-slate-400 flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
+                    <svg class="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>UPDATED ${updatedAt}</span>
+                </span>` : ''}
+            </div>
+
+            <!-- Topic Heading -->
+            <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 uppercase tracking-tight break-words">
+                ${cls.topic}
+            </h3>
+
+            <!-- Time Details -->
+            <div class="text-slate-600 font-semibold text-xs sm:text-sm mt-2 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>${displayTime}</span>
+            </div>
+
+            <!-- Responsive Action Buttons -->
+            <div class="mt-4 sm:mt-5 grid grid-cols-2 gap-2.5 sm:gap-3">
+                <button id="${btnId}" onclick='handleCopy("${btnId}", ${JSON.stringify(cls.formatted_message || "").replace(/'/g, "&#39;")}, ${cls.id || 0}, "${batchName.replace(/"/g, "")}")' 
+                    class="w-full bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-950 font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm touch-manipulation select-none">
+                    <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span class="btn-label truncate">Copy Message</span>
+                </button>
+                
+                <a href="${cls.zoom_link}" target="_blank" rel="noopener noreferrer" onclick='handleJoinZoom(${cls.id || 0}, "${batchName.replace(/"/g, "")}")'
+                    class="w-full bg-white border-2 border-amber-200/90 hover:border-amber-400 hover:bg-amber-50/50 active:bg-amber-100/50 text-slate-800 font-bold py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm touch-manipulation select-none">
+                    <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M4.5 10.5L9 6v3h6v3H9v3l-4.5-4.5zM21 4H3a1 1 0 00-1 1v14a1 1 0 001 1h18a1 1 0 001-1V5a1 1 0 00-1-1zm-1 14H4V6h16v12z"/></svg>
+                    <span class="truncate">Join Zoom</span>
+                </a>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
 function handleCopy(btnId, text, sessionId = 0, batchName = '') {
     if (!text) return;
     
-    // Log audit trail
-    logMentorAction("COPY_MESSAGE", sessionId, batchName, "Mentor copied formatted message to share");
+    // Log audit trail with staff name accountability
+    logMentorAction("COPY_MESSAGE", sessionId, batchName, `Copied by ${mentorName} to dispatch to ${batchName}`);
 
     // Copy to clipboard
     if (navigator.clipboard && window.isSecureContext) {
@@ -366,8 +408,8 @@ function handleCopy(btnId, text, sessionId = 0, batchName = '') {
 }
 
 function handleJoinZoom(sessionId = 0, batchName = '') {
-    // Log audit trail
-    logMentorAction("JOIN_ZOOM", sessionId, batchName, "Mentor launched Zoom session");
+    // Log audit trail with staff name accountability
+    logMentorAction("JOIN_ZOOM", sessionId, batchName, `Zoom meeting launched by ${mentorName}`);
 }
 
 function fallbackCopy(btnId, text) {
