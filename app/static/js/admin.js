@@ -134,6 +134,48 @@ async function loadBatches() {
     }
 }
 
+let adminSessionSearchQuery = '';
+
+function handleAdminSessionSearch(val) {
+    adminSessionSearchQuery = (val || '').trim().toLowerCase();
+    const clearBtn = document.getElementById('admin-session-search-clear');
+    if (clearBtn) {
+        if (adminSessionSearchQuery) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+    }
+    renderSessionsTable();
+}
+
+function clearAdminSessionSearch() {
+    const input = document.getElementById('admin-session-search');
+    if (input) input.value = '';
+    adminSessionSearchQuery = '';
+    const clearBtn = document.getElementById('admin-session-search-clear');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    renderSessionsTable();
+}
+
+function filterAdminSessions() {
+    renderSessionsTable();
+}
+
+function resetAdminSessionFilters() {
+    const searchInput = document.getElementById('admin-session-search');
+    const syllabusSel = document.getElementById('admin-session-syllabus');
+    const classSel = document.getElementById('admin-session-class');
+    const dateSel = document.getElementById('admin-session-date');
+    const clearBtn = document.getElementById('admin-session-search-clear');
+
+    if (searchInput) searchInput.value = '';
+    adminSessionSearchQuery = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+    if (syllabusSel) syllabusSel.value = 'ALL';
+    if (classSel) classSel.value = 'ALL';
+    if (dateSel) dateSel.value = 'ALL';
+
+    renderSessionsTable();
+}
+
 async function loadSessions() {
     try {
         let url = '/api/sessions';
@@ -141,51 +183,112 @@ async function loadSessions() {
             url += `?class_category=${encodeURIComponent(currentAdmin.assigned_classes)}`;
         }
         sessions = await api(url);
-        const tbody = document.getElementById('sessions-tbody');
-        tbody.innerHTML = '';
-        if (sessions.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">No sessions scheduled yet. Click "+ Create Session" above.</td></tr>`;
-            return;
-        }
-        sessions.forEach(s => {
-            const syllabus = s.batch && s.batch.syllabus ? s.batch.syllabus : '';
-            const sylBadge = syllabus === 'CBSE' 
-                ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">CBSE</span>`
-                : (syllabus === 'STATE' ? `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">STATE</span>` : '');
-
-            const classCat = s.class_category || (s.batch ? s.batch.class_category : '') || (s.batch ? s.batch.class_number : '');
-            const classBadge = classCat ? `
-                <span class="bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md text-xs font-black uppercase">
-                    ${classCat}
-                </span>` : '<span class="text-slate-400">-</span>';
-
-            tbody.innerHTML += `
-                <tr class="hover:bg-amber-50/30 transition-colors">
-                    <td class="p-4 font-semibold text-slate-800">${s.class_date}</td>
-                    <td class="p-4">${classBadge}</td>
-                    <td class="p-4 text-slate-600">
-                        <span class="bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1">
-                            ${sylBadge}
-                            <span>${s.batch ? s.batch.name : 'Unknown'}</span>
-                        </span>
-                    </td>
-                    <td class="p-4 font-extrabold text-slate-900">${s.topic}</td>
-                    <td class="p-4 font-medium text-slate-600">${s.start_time}</td>
-                    <td class="p-4">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold ${s.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}">
-                            ${s.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                    </td>
-                    <td class="p-4 text-right space-x-2">
-                        <button onclick="editSession(${s.id})" class="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">Edit</button>
-                        <button onclick="deleteSession(${s.id})" class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors">Delete</button>
-                    </td>
-                </tr>
-            `;
-        });
+        renderSessionsTable();
     } catch(e) {
         console.error(e);
     }
+}
+
+function renderSessionsTable() {
+    const tbody = document.getElementById('sessions-tbody');
+    const countBadge = document.getElementById('admin-session-count');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const syllabusFilter = document.getElementById('admin-session-syllabus')?.value || 'ALL';
+    const classFilter = document.getElementById('admin-session-class')?.value || 'ALL';
+    const dateFilter = document.getElementById('admin-session-date')?.value || 'ALL';
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    let filtered = sessions.filter(s => {
+        // 1. Syllabus filter
+        if (syllabusFilter !== 'ALL') {
+            const syl = s.batch && s.batch.syllabus ? s.batch.syllabus : '';
+            if (syl !== syllabusFilter) return false;
+        }
+
+        // 2. Class filter
+        if (classFilter !== 'ALL') {
+            const classCat = (s.class_category || (s.batch ? s.batch.class_category : '') || (s.batch ? s.batch.class_number : '') || '').toUpperCase();
+            if (classCat !== classFilter) return false;
+        }
+
+        // 3. Date filter
+        if (dateFilter === 'TODAY') {
+            if (s.class_date !== todayStr) return false;
+        } else if (dateFilter === 'UPCOMING') {
+            if (s.class_date <= todayStr) return false;
+        }
+
+        // 4. Search query
+        if (adminSessionSearchQuery) {
+            const batchName = (s.batch ? s.batch.name : '').toLowerCase();
+            const topic = (s.topic || '').toLowerCase();
+            const startTime = (s.start_time || '').toLowerCase();
+            const classCat = (s.class_category || (s.batch ? s.batch.class_category : '') || '').toLowerCase();
+            const matches = batchName.includes(adminSessionSearchQuery) || 
+                            topic.includes(adminSessionSearchQuery) || 
+                            startTime.includes(adminSessionSearchQuery) || 
+                            classCat.includes(adminSessionSearchQuery);
+            if (!matches) return false;
+        }
+
+        return true;
+    });
+
+    if (countBadge) {
+        countBadge.textContent = `${filtered.length} of ${sessions.length} Sessions`;
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="p-8 text-center text-slate-400">
+                    No sessions match the selected filters.
+                    <button onclick="resetAdminSessionFilters()" class="text-amber-600 font-bold ml-1.5 underline hover:text-amber-700">Reset Filters</button>
+                </td>
+            </tr>`;
+        return;
+    }
+
+    filtered.forEach(s => {
+        const syllabus = s.batch && s.batch.syllabus ? s.batch.syllabus : '';
+        const sylBadge = syllabus === 'CBSE' 
+            ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">CBSE</span>`
+            : (syllabus === 'STATE' ? `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-black mr-1">STATE</span>` : '');
+
+        const classCat = s.class_category || (s.batch ? s.batch.class_category : '') || (s.batch ? s.batch.class_number : '');
+        const classBadge = classCat ? `
+            <span class="bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md text-xs font-black uppercase">
+                ${classCat}
+            </span>` : '<span class="text-slate-400">-</span>';
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-amber-50/30 transition-colors">
+                <td class="p-4 font-semibold text-slate-800">${s.class_date}</td>
+                <td class="p-4">${classBadge}</td>
+                <td class="p-4 text-slate-600">
+                    <span class="bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1">
+                        ${sylBadge}
+                        <span>${s.batch ? s.batch.name : 'Unknown'}</span>
+                    </span>
+                </td>
+                <td class="p-4 font-extrabold text-slate-900">${s.topic}</td>
+                <td class="p-4 font-medium text-slate-600">${s.start_time}</td>
+                <td class="p-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold ${s.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                        ${s.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td class="p-4 text-right space-x-2">
+                    <button onclick="editSession(${s.id})" class="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">Edit</button>
+                    <button onclick="deleteSession(${s.id})" class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
 }
 
 async function loadAuditLogs() {

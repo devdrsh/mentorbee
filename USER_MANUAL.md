@@ -54,7 +54,13 @@ The Administrative Console provides total operational control over sessions, bat
 - **Mentor Portal Link (`↗`)**: Direct shortcut to open the live mentor view in a new browser tab.
 - **Logout**: Clears the JWT admin token and returns to the login screen.
 
-### 3.2 Tab 1: Sessions Management
+### 3.2 Tab 1: Sessions Management & Advanced Filtering
+- **Sessions Filtering & Search Toolbar**:
+  - **🔍 Search Filter**: Live instant filtering by Topic, Batch Name, Subject, or Timing.
+  - **Syllabus Filter**: Filter by `All Syllabuses`, `CBSE`, or `STATE`.
+  - **Class / Grade Filter**: Filter by `All Classes`, `8th`, `9th`, `10th`, `11th Sci`, `11th Com`, `12th Sci`, or `12th Com`.
+  - **Date Filter**: Filter between `All Dates`, `Today's Sessions`, or `Upcoming Sessions`.
+  - **Live Counter & Reset**: Displays exact matched count (e.g. `12 of 34 Sessions`) with a 1-click `Reset` button.
 - **Creating a Session**:
   1. Click **`+ Create Session`**.
   2. *(Recommended)* Paste full Zoom meeting invite into **`⚡ Quick Zoom Paste Auto-Fill`** and click **`Auto Parse Link & Credentials`**.
