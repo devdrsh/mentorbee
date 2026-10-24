@@ -12,8 +12,12 @@ class BatchBase(BaseModel):
 class BatchCreate(BatchBase):
     pass
 
-class BatchUpdate(BatchBase):
-    pass
+class BatchUpdate(BaseModel):
+    name: Optional[str] = None
+    class_number: Optional[str] = None
+    class_category: Optional[str] = None
+    syllabus: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class BatchResponse(BatchBase):
     id: int

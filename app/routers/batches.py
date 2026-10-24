@@ -5,8 +5,11 @@ import re
 
 from app.database import get_db
 from app.models.batch import Batch
+from app.models.session import ClassSession
+from app.models.history import SessionChangeHistory
 from app.schemas.batch import BatchCreate, BatchUpdate, BatchResponse
 from app.routers.admin import get_current_admin
+from app.websockets import manager
 
 router = APIRouter(prefix="/api/batches", tags=["batches"])
 
@@ -52,7 +55,7 @@ def infer_class_category(name: str) -> str:
 
 
 @router.post("", response_model=BatchResponse)
-def create_batch(batch: BatchCreate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin)):
+async def create_batch(batch: BatchCreate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin)):
     clean_name = " ".join(batch.name.strip().split()).upper()
     db_batch = db.query(Batch).filter(Batch.name == clean_name).first()
     if db_batch:
@@ -71,6 +74,7 @@ def create_batch(batch: BatchCreate, db: Session = Depends(get_db), current_admi
     db.add(new_batch)
     db.commit()
     db.refresh(new_batch)
+    await manager.broadcast("update")
     return new_batch
 
 @router.get("", response_model=List[BatchResponse])
@@ -92,13 +96,13 @@ def get_batches(
     return query.order_by(Batch.syllabus.asc(), Batch.name.asc()).all()
 
 @router.put("/{batch_id}", response_model=BatchResponse)
-def update_batch(batch_id: int, batch: BatchUpdate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin)):
+async def update_batch(batch_id: int, batch: BatchUpdate, db: Session = Depends(get_db), current_admin = Depends(get_current_admin)):
     db_batch = db.query(Batch).filter(Batch.id == batch_id).first()
     if not db_batch:
         raise HTTPException(status_code=404, detail="Batch not found")
     
     data = batch.model_dump(exclude_unset=True)
-    if 'name' in data:
+    if 'name' in data and data['name']:
         data['name'] = " ".join(data['name'].strip().split()).upper()
         if not data.get('syllabus') and not db_batch.syllabus:
             data['syllabus'] = infer_syllabus(data['name'])
@@ -109,4 +113,33 @@ def update_batch(batch_id: int, batch: BatchUpdate, db: Session = Depends(get_db
         setattr(db_batch, key, value)
     db.commit()
     db.refresh(db_batch)
+    await manager.broadcast("update")
     return db_batch
+
+@router.delete("/{batch_id}")
+async def delete_batch(
+    batch_id: int,
+    force: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_admin = Depends(get_current_admin)
+):
+    db_batch = db.query(Batch).filter(Batch.id == batch_id).first()
+    if not db_batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    sessions = db.query(ClassSession).filter(ClassSession.batch_id == batch_id).all()
+    if sessions:
+        if not force:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Batch '{db_batch.name}' has {len(sessions)} associated session(s). Deleting it will also remove those sessions."
+            )
+        for s in sessions:
+            db.query(SessionChangeHistory).filter(SessionChangeHistory.session_id == s.id).delete()
+            db.delete(s)
+
+    batch_name = db_batch.name
+    db.delete(db_batch)
+    db.commit()
+    await manager.broadcast("update")
+    return {"detail": f"Batch '{batch_name}' deleted successfully"}

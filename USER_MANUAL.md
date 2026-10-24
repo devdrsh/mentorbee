@@ -74,8 +74,13 @@ The Administrative Console provides total operational control over sessions, bat
 
 ### 3.3 Tab 2: Batches Management
 - View all 116+ State, CBSE, and Exam Killer batches categorized by grade and program.
-- Click **`+ Create Batch`** to register new classes. You can specify Name, Program (`CBSE`, `STATE`, `⚡ EXAM KILLER`), and Class Stream.
-- Click **`Edit`** to adjust batch nomenclature or status.
+- **Dynamic Action Button**: When switching to the Batches tab, the top action button dynamically switches to **`+ Create Batches`** (replacing `+ Create Session`).
+- **Batches Toolbar**: Real-time batch search by name, syllabus, and class stream with live count and reset.
+- **Register New Batches**: Click **`+ Create Batches`** to register new classes. You can specify Name, Program (`CBSE`, `STATE`, `⚡ EXAM KILLER`), and Class Stream.
+- **Editing a Batch**: Click **`Edit`** to adjust batch nomenclature, syllabus, class category, or status.
+- **Deleting a Batch**:
+  - Click **`Delete`** directly on any row in the batches table, or click **`Delete Batch`** from within the batch edit modal.
+  - Features smart safety protection: if sessions are linked to the batch, you are prompted with the exact count of linked sessions and asked to confirm permanent removal.
 
 ### 3.4 Tab 3: Security & Access Audit Trail (Super Admin Exclusive)
 - Real-time compliance logging tracking mentor actions:

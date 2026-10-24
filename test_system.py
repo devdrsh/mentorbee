@@ -111,6 +111,78 @@ def test_all():
     assert created_session["class_category"] == "8TH"
     print(f"   Created Session ID: {created_session['id']}")
 
+    # 8. Test Batch Creation and Deletion (Normal and Force)
+    print("\n8. Testing Batch Creation and Deletion:")
+    # 8a: Create a standalone batch
+    create_res = client.post(
+        "/api/batches",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "name": "TEMPORARY TEST BATCH ALPHA",
+            "class_category": "10TH",
+            "syllabus": "STATE"
+        }
+    )
+    assert create_res.status_code == 200, f"Failed to create test batch: {create_res.text}"
+    temp_batch = create_res.json()
+    temp_batch_id = temp_batch["id"]
+    print(f"   [OK] Created Temp Batch ID: {temp_batch_id} ('{temp_batch['name']}')")
+
+    # 8b: Delete standalone batch without sessions
+    del_res = client.delete(
+        f"/api/batches/{temp_batch_id}",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert del_res.status_code == 200, f"Failed to delete batch: {del_res.text}"
+    print(f"   [OK] Standalone Batch Deleted: Status {del_res.status_code}")
+
+    # 8c: Create another batch with a session linked to it
+    create_res2 = client.post(
+        "/api/batches",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "name": "TEMPORARY TEST BATCH BETA",
+            "class_category": "9TH",
+            "syllabus": "CBSE"
+        }
+    )
+    assert create_res2.status_code == 200
+    temp_batch2 = create_res2.json()
+    temp_batch2_id = temp_batch2["id"]
+
+    sess_res = client.post(
+        "/api/sessions",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "batch_id": temp_batch2_id,
+            "class_category": "9TH",
+            "topic": "Test Session for Batch Beta",
+            "class_date": "2026-08-21",
+            "start_time": "19:00",
+            "zoom_link": "https://zoom.us/j/999888777",
+            "meeting_id": "999 888 777",
+            "passcode": "654321"
+        }
+    )
+    assert sess_res.status_code == 200
+    print(f"   [OK] Created Batch with Linked Session (ID: {sess_res.json()['id']})")
+
+    # 8d: Delete without force should fail with 400
+    del_fail_res = client.delete(
+        f"/api/batches/{temp_batch2_id}",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert del_fail_res.status_code == 400, f"Expected 400, got {del_fail_res.status_code}"
+    print(f"   [OK] Delete without force rejected as expected: {del_fail_res.json()['detail']}")
+
+    # 8e: Delete with force=true should succeed
+    del_force_res = client.delete(
+        f"/api/batches/{temp_batch2_id}?force=true",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert del_force_res.status_code == 200, f"Force delete failed: {del_force_res.text}"
+    print(f"   [OK] Force Delete succeeded: {del_force_res.json()['detail']}")
+
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED SUCCESSFULLY!")
     print("=" * 60)

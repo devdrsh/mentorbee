@@ -69,21 +69,148 @@ function switchTab(tab) {
         tabAudit.className = 'font-bold text-base sm:text-lg text-slate-400 hover:text-amber-700 px-2 pb-2 transition-all whitespace-nowrap flex items-center gap-1.5' + (currentAdmin && currentAdmin.role === 'SUPER_ADMIN' ? '' : ' hidden');
     }
     
+    const createBtn = document.getElementById('btn-create-main');
+    const createLabel = document.getElementById('btn-create-label');
+
     if (tab === 'sessions') {
         document.getElementById('sessions-view').classList.remove('hidden');
         document.getElementById('tab-sessions').className = 'font-extrabold text-base sm:text-lg text-amber-700 border-b-2 border-amber-500 px-2 pb-2 transition-all whitespace-nowrap';
+        if (createBtn) createBtn.classList.remove('hidden');
+        if (createLabel) createLabel.innerText = 'Create Session';
         loadSessions();
     } else if (tab === 'batches') {
         document.getElementById('batches-view').classList.remove('hidden');
         document.getElementById('tab-batches').className = 'font-extrabold text-base sm:text-lg text-amber-700 border-b-2 border-amber-500 px-2 pb-2 transition-all whitespace-nowrap';
+        if (createBtn) createBtn.classList.remove('hidden');
+        if (createLabel) createLabel.innerText = 'Create Batches';
         loadBatches();
     } else if (tab === 'audit-logs' && currentAdmin && currentAdmin.role === 'SUPER_ADMIN') {
         document.getElementById('audit-logs-view').classList.remove('hidden');
         if (tabAudit) {
             tabAudit.className = 'font-extrabold text-base sm:text-lg text-amber-700 border-b-2 border-amber-500 px-2 pb-2 transition-all whitespace-nowrap flex items-center gap-1.5';
         }
+        if (createBtn) createBtn.classList.add('hidden');
         loadAuditLogs();
     }
+}
+
+let adminBatchSearchQuery = '';
+
+function handleAdminBatchSearch(val) {
+    adminBatchSearchQuery = (val || '').trim().toLowerCase();
+    const clearBtn = document.getElementById('admin-batch-search-clear');
+    if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !adminBatchSearchQuery);
+    }
+    filterAdminBatches();
+}
+
+function clearAdminBatchSearch() {
+    const searchInput = document.getElementById('admin-batch-search');
+    if (searchInput) searchInput.value = '';
+    adminBatchSearchQuery = '';
+    const clearBtn = document.getElementById('admin-batch-search-clear');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    filterAdminBatches();
+}
+
+function filterAdminBatches() {
+    const syl = document.getElementById('admin-batch-syllabus')?.value || 'ALL';
+    const cls = document.getElementById('admin-batch-class')?.value || 'ALL';
+
+    const filtered = (batches || []).filter(b => {
+        if (adminBatchSearchQuery) {
+            const name = (b.name || '').toLowerCase();
+            const syllabus = (b.syllabus || '').toLowerCase();
+            const cat = (b.class_category || '').toLowerCase();
+            if (!name.includes(adminBatchSearchQuery) && !syllabus.includes(adminBatchSearchQuery) && !cat.includes(adminBatchSearchQuery)) {
+                return false;
+            }
+        }
+        if (syl !== 'ALL') {
+            if (syl === 'EXAM KILLER') {
+                const isExamKiller = b.syllabus === 'EXAM KILLER' || (b.name && b.name.includes('EXAM KILLER'));
+                if (!isExamKiller) return false;
+            } else if (b.syllabus !== syl) {
+                return false;
+            }
+        }
+        if (cls !== 'ALL') {
+            if (cls === 'EXAM KILLER') {
+                const isExam = b.class_category === 'EXAM KILLER' || (b.name && b.name.includes('EXAM KILLER'));
+                if (!isExam) return false;
+            } else if (b.class_category !== cls) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    renderBatchesTable(filtered);
+}
+
+function resetAdminBatchFilters() {
+    const searchInput = document.getElementById('admin-batch-search');
+    if (searchInput) searchInput.value = '';
+    adminBatchSearchQuery = '';
+    const clearBtn = document.getElementById('admin-batch-search-clear');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    const sylElem = document.getElementById('admin-batch-syllabus');
+    if (sylElem) sylElem.value = 'ALL';
+    const clsElem = document.getElementById('admin-batch-class');
+    if (clsElem) clsElem.value = 'ALL';
+    renderBatchesTable(batches);
+}
+
+function renderBatchesTable(list) {
+    const tbody = document.getElementById('batches-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const countElem = document.getElementById('admin-batch-count');
+    if (countElem) {
+        countElem.innerText = `${list.length} Batches`;
+    }
+
+    if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">No batches available for this class scope.</td></tr>`;
+        return;
+    }
+
+    list.forEach(b => {
+        const isCbse = b.syllabus === 'CBSE';
+        const isExamKiller = b.syllabus === 'EXAM KILLER' || (b.name && b.name.includes('EXAM KILLER'));
+        const sylBadge = isCbse 
+            ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-full text-xs font-bold">CBSE</span>`
+            : (isExamKiller 
+                ? `<span class="bg-rose-50 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-xs font-extrabold">⚡ EXAM KILLER</span>`
+                : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-bold">STATE</span>`);
+
+        const catBadge = b.class_category ? `
+            <span class="bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md text-xs font-extrabold">
+                ${b.class_category}
+            </span>` : '<span class="text-slate-400">-</span>';
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-amber-50/30 transition-colors">
+                <td class="p-4 text-slate-400 font-mono text-xs">#${b.id}</td>
+                <td class="p-4">${catBadge}</td>
+                <td class="p-4 font-bold text-slate-800 flex items-center gap-2">
+                    <span>${b.name}</span>
+                </td>
+                <td class="p-4">${sylBadge}</td>
+                <td class="p-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold ${b.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}">
+                        ${b.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td class="p-4 text-right space-x-2 whitespace-nowrap">
+                    <button onclick="editBatch(${b.id})" class="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">Edit</button>
+                    <button onclick="deleteBatch(${b.id})" class="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition-colors">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
 }
 
 async function loadBatches() {
@@ -93,46 +220,7 @@ async function loadBatches() {
             url += `?class_category=${encodeURIComponent(currentAdmin.assigned_classes)}`;
         }
         batches = await api(url);
-        const tbody = document.getElementById('batches-tbody');
-        tbody.innerHTML = '';
-        if (batches.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">No batches available for this class scope.</td></tr>`;
-            return;
-        }
-        batches.forEach(b => {
-            const isCbse = b.syllabus === 'CBSE';
-            const isExamKiller = b.syllabus === 'EXAM KILLER' || (b.name && b.name.includes('EXAM KILLER'));
-            const sylBadge = isCbse 
-                ? `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-full text-xs font-bold">CBSE</span>`
-                : (isExamKiller 
-                    ? `<span class="bg-rose-50 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-xs font-extrabold">⚡ EXAM KILLER</span>`
-                    : `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-xs font-bold">STATE</span>`);
-
-
-            const catBadge = b.class_category ? `
-                <span class="bg-amber-100 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md text-xs font-extrabold">
-                    ${b.class_category}
-                </span>` : '<span class="text-slate-400">-</span>';
-
-            tbody.innerHTML += `
-                <tr class="hover:bg-amber-50/30 transition-colors">
-                    <td class="p-4 text-slate-400 font-mono text-xs">#${b.id}</td>
-                    <td class="p-4">${catBadge}</td>
-                    <td class="p-4 font-bold text-slate-800 flex items-center gap-2">
-                        <span>${b.name}</span>
-                    </td>
-                    <td class="p-4">${sylBadge}</td>
-                    <td class="p-4">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold ${b.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}">
-                            ${b.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                    </td>
-                    <td class="p-4 text-right">
-                        <button onclick="editBatch(${b.id})" class="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors">Edit</button>
-                    </td>
-                </tr>
-            `;
-        });
+        filterAdminBatches();
     } catch(e) {
         console.error(e);
     }
@@ -736,17 +824,82 @@ async function editSession(id) {
 
 async function editBatch(id) {
     const b = batches.find(x => x.id === id);
+    if (!b) return;
     showCreateModal();
     document.getElementById('modal-title').innerText = 'Edit Batch';
     document.getElementById('b_name').value = b.name;
-    document.getElementById('createForm').onsubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await api(`/api/batches/${id}`, { method: 'PUT', body: { name: document.getElementById('b_name').value } });
-            closeModal();
-            loadBatches();
-        } catch(err) {
-            alert(err.detail || 'Error saving');
+    if (document.getElementById('b_syllabus') && b.syllabus) {
+        document.getElementById('b_syllabus').value = b.syllabus;
+    }
+    if (document.getElementById('b_class_category') && b.class_category) {
+        document.getElementById('b_class_category').value = b.class_category;
+    }
+
+    const form = document.getElementById('createForm');
+    if (form) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            const btnContainer = document.createElement('div');
+            btnContainer.className = 'flex items-center justify-between gap-3 mt-4';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'px-4 py-2.5 rounded-xl font-bold text-xs text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors';
+            deleteBtn.innerText = 'Delete Batch';
+            deleteBtn.onclick = () => deleteBatch(id, b.name);
+
+            submitBtn.innerText = 'Save Changes';
+            submitBtn.className = 'flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl shadow-sm transition-all text-xs';
+
+            submitBtn.parentNode.insertBefore(btnContainer, submitBtn);
+            btnContainer.appendChild(deleteBtn);
+            btnContainer.appendChild(submitBtn);
+        }
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('b_name').value
+            };
+            const sylElem = document.getElementById('b_syllabus');
+            if (sylElem) payload.syllabus = sylElem.value;
+            const catElem = document.getElementById('b_class_category');
+            if (catElem) payload.class_category = catElem.value;
+
+            try {
+                await api(`/api/batches/${id}`, { method: 'PUT', body: payload });
+                closeModal();
+                loadBatches();
+            } catch(err) {
+                alert(err.detail || 'Error saving');
+            }
+        };
+    }
+}
+
+async function deleteBatch(id, batchName = '') {
+    const b = batches.find(x => x.id === id);
+    const name = batchName || (b ? b.name : `Batch #${id}`);
+    if (!confirm(`Are you sure you want to delete batch "${name}"?`)) {
+        return;
+    }
+    try {
+        await api(`/api/batches/${id}`, { method: 'DELETE' });
+        closeModal();
+        loadBatches();
+    } catch(err) {
+        if (err && err.detail && err.detail.includes('associated session')) {
+            if (confirm(`${err.detail}\n\nDo you want to permanently delete this batch and all its sessions?`)) {
+                try {
+                    await api(`/api/batches/${id}?force=true`, { method: 'DELETE' });
+                    closeModal();
+                    loadBatches();
+                } catch(e) {
+                    alert(e.detail || 'Error deleting batch');
+                }
+            }
+        } else {
+            alert(err.detail || 'Error deleting batch');
         }
     }
 }
