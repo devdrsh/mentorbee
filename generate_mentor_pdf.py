@@ -473,17 +473,18 @@ def build_mentor_guide_html():
 
     <div class="template-box">
 *MENTORBEE EDUVERSE*<br>
-*10TH CBSE EVNG KL BATCH*<br>
----------------------------------------<br>
-*TOPIC : MATHEMATICS - QUADRATIC EQUATIONS*<br>
-*DATE : AUGUST 21, 2026*<br>
-*TIME : 07:00 PM IST*<br>
+*EXAM KILLER 4.0 - REVISE*<br>
+*10TH CBSE KL REV-2 BATCH (2)*<br>
+-----------------------------------<br>
+*TOPIC : CHEMISTRY*<br>
+*DATE : OCTOBER 26, 2026*<br>
+*TIME : 06:00 PM IST*<br>
 <br>
 *Join Zoom Meeting*<br>
-https://zoom.us/j/99887766554?pwd=samplepassword<br>
+https://us06web.zoom.us/j/89982457863?pwd=cDv1PpMA7zYEjbQ3kVgZGqbbwakqi3.1<br>
 <br>
-*Meeting ID: 998 8776 6554*<br>
-*Passcode: 123456*
+*Meeting ID: 899 8245 7863*<br>
+*Passcode: mentorbee*
     </div>
 
     <!-- 6. Critical Security Warning -->

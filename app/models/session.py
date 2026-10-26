@@ -26,6 +26,5 @@ class ClassSession(Base):
     @property
     def formatted_message(self) -> str:
         from app.services.message_generator import generate_message
-        if self.batch:
-            return generate_message(self.batch, self)
-        return ""
+        return generate_message(self.batch, self)
+

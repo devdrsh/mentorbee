@@ -132,12 +132,31 @@ Every session card displays a dedicated timestamp badge in the upper-right corne
 ### 6.1 Copying WhatsApp Broadcast Message
 1. Tap the golden **`Copy Message`** button on the target class card.
 2. The button will immediately turn green and display **`✓ Copied!`** with a confirmation toast popup.
-3. The following standardized template is copied to your clipboard:
+3. The standardized template is copied to your clipboard:
 
+**For Exam Killer / Revision Batches:**
+```text
+*MENTORBEE EDUVERSE*
+*EXAM KILLER 4.0 - REVISE*
+*10TH CBSE KL REV-2 BATCH (2)* 
+-----------------------------------
+*TOPIC : CHEMISTRY*
+*DATE : OCTOBER 26, 2026*
+*TIME : 06:00 PM IST*
+
+
+*Join Zoom Meeting*
+https://us06web.zoom.us/j/89982457863?pwd=cDv1PpMA7zYEjbQ3kVgZGqbbwakqi3.1
+
+*Meeting ID: 899 8245 7863*
+*Passcode: mentorbee*
+```
+
+**For Regular Batches:**
 ```text
 *MENTORBEE EDUVERSE*
 *10TH CBSE EVNG KL BATCH*
----------------------------------------
+-----------------------------------
 *TOPIC : MATHEMATICS - QUADRATIC EQUATIONS*
 *DATE : AUGUST 21, 2026*
 *TIME : 07:00 PM IST*

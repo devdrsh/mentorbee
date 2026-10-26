@@ -121,12 +121,31 @@ Designed for lightning-fast operation on mobile smartphones, tablets, and deskto
 
 ## ⚡ 5. Standard WhatsApp Broadcast Template
 
-When mentors click **`Copy Message`**, the system outputs:
+When mentors click **`Copy Message`**, the system outputs the standardized broadcast message:
 
+**For Exam Killer / Revision Batches:**
+```text
+*MENTORBEE EDUVERSE*
+*EXAM KILLER 4.0 - REVISE*
+*10TH CBSE KL REV-2 BATCH (2)* 
+-----------------------------------
+*TOPIC : CHEMISTRY*
+*DATE : OCTOBER 26, 2026*
+*TIME : 06:00 PM IST*
+
+
+*Join Zoom Meeting*
+https://us06web.zoom.us/j/89982457863?pwd=cDv1PpMA7zYEjbQ3kVgZGqbbwakqi3.1
+
+*Meeting ID: 899 8245 7863*
+*Passcode: mentorbee*
+```
+
+**For Regular State / CBSE Batches:**
 ```text
 *MENTORBEE EDUVERSE*
 *10TH CBSE EVNG KL BATCH*
----------------------------------------
+-----------------------------------
 *TOPIC : MATHEMATICS - QUADRATIC EQUATIONS*
 *DATE : AUGUST 21, 2026*
 *TIME : 07:00 PM IST*
@@ -138,6 +157,7 @@ https://zoom.us/j/99887766554?pwd=samplepassword
 *Meeting ID: 998 8776 6554*
 *Passcode: 123456*
 ```
+*(The `*EXAM KILLER 4.0 - REVISE*` header is automatically included for Exam Killer/revision batches and omitted for regular CBSE/State batches).*
 
 ---
 
