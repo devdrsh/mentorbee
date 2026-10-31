@@ -129,20 +129,29 @@ function switchSyllabus(syllabus) {
     loadClasses();
 }
 
+function getMentorLocalDateStr() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 function switchTimeTab(tab) {
     if (currentTimeTab === tab) return;
     currentTimeTab = tab;
     
     const tabToday = document.getElementById('tab-time-today');
     const tabUpcoming = document.getElementById('tab-time-upcoming');
+    const tabAll = document.getElementById('tab-time-all');
+
+    const activeClass = 'time-tab-active pb-2.5 font-bold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center gap-1.5 sm:gap-2';
+    const inactiveClass = 'time-tab-inactive pb-2.5 font-bold text-xs sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-1.5 sm:gap-2';
     
-    if (tab === 'today') {
-        tabToday.className = 'time-tab-active pb-2.5 font-bold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center gap-2';
-        tabUpcoming.className = 'time-tab-inactive pb-2.5 font-bold text-sm sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-2';
-    } else {
-        tabToday.className = 'time-tab-inactive pb-2.5 font-bold text-sm sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-2';
-        tabUpcoming.className = 'time-tab-active pb-2.5 font-bold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center gap-2';
-    }
+    if (tabToday) tabToday.className = tab === 'today' ? activeClass : inactiveClass;
+    if (tabUpcoming) tabUpcoming.className = tab === 'upcoming' ? activeClass : inactiveClass;
+    if (tabAll) tabAll.className = tab === 'all' ? activeClass : inactiveClass;
+
     loadClasses();
 }
 
@@ -164,11 +173,16 @@ function formatUpdatedAt(dateStr) {
 
 function formatDisplayDate(dateStr) {
     if (!dateStr) return '';
+    const todayStr = getMentorLocalDateStr();
     try {
         const parts = dateStr.split('-');
         if (parts.length === 3) {
             const d = new Date(parts[0], parts[1] - 1, parts[2]);
-            return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const formatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            if (dateStr === todayStr) {
+                return `Today, ${formatted}`;
+            }
+            return formatted;
         }
     } catch(e) {
         console.error(e);
@@ -303,7 +317,9 @@ function renderFilteredSessions() {
     }
 
     // Update count badge for active time tab
-    const countBadge = document.getElementById(currentTimeTab === 'today' ? 'today-count' : 'upcoming-count');
+    const countBadge = document.getElementById(
+        currentTimeTab === 'today' ? 'today-count' : (currentTimeTab === 'upcoming' ? 'upcoming-count' : 'all-count')
+    );
     if (countBadge) {
         if (loadedSessionsCache.length > 0) {
             countBadge.textContent = loadedSessionsCache.length;
@@ -321,7 +337,8 @@ function renderFilteredSessions() {
                 emptyDesc.innerHTML = `No ${currentSyllabus} sessions match "<b>${escapeHtml(searchQuery)}</b>". <br><button onclick="clearSearch()" class="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-xl transition-all">Clear Search Query</button>`;
             } else {
                 const filterNote = currentClassFilter ? ` for Class ${currentClassFilter}` : '';
-                emptyTitle.textContent = `No ${currentSyllabus} classes ${currentTimeTab === 'today' ? 'today' : 'upcoming'}`;
+                const tabLabel = currentTimeTab === 'today' ? 'today' : (currentTimeTab === 'upcoming' ? 'upcoming' : 'scheduled');
+                emptyTitle.textContent = `No ${currentSyllabus} classes ${tabLabel}`;
                 emptyDesc.textContent = `There are no scheduled ${currentSyllabus}${filterNote} sessions in this list right now.`;
             }
         }
@@ -331,6 +348,8 @@ function renderFilteredSessions() {
 
     emptyState.classList.add('hidden');
     list.innerHTML = '';
+
+    const todayStr = getMentorLocalDateStr();
 
     filtered.forEach((cls, index) => {
         const updatedAt = formatUpdatedAt(cls.updated_at);
@@ -348,7 +367,12 @@ function renderFilteredSessions() {
             displayTime = `${h.toString().padStart(2, '0')}:${m} ${ampm} IST`;
         }
 
-        const formattedDate = currentTimeTab === 'upcoming' ? formatDisplayDate(cls.class_date) : '';
+        const formattedDate = formatDisplayDate(cls.class_date);
+        const isToday = cls.class_date === todayStr;
+        const dateBadgeStyle = isToday 
+            ? 'bg-amber-100 text-amber-950 border border-amber-300/80 font-extrabold'
+            : 'bg-slate-100 text-slate-700 border border-slate-200 font-bold';
+
         const btnId = `copy-btn-${cls.id || index}`;
         const syllabus = cls.batch && cls.batch.syllabus ? cls.batch.syllabus : currentSyllabus;
         const isCbse = syllabus === 'CBSE';
@@ -376,7 +400,7 @@ function renderFilteredSessions() {
         const batchName = cls.batch ? cls.batch.name : 'Batch';
 
         card.innerHTML = `
-            <!-- Top Row: Syllabus Badge, Class Badge, Batch Name and Updated Timestamp -->
+            <!-- Top Row: Syllabus Badge, Class Badge, Batch Name, Date Badge, and Updated Timestamp -->
             <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                 <div class="flex items-center gap-1.5 flex-wrap">
                     ${syllabusBadge}
@@ -385,8 +409,9 @@ function renderFilteredSessions() {
                         ${batchName}
                     </span>
                     ${formattedDate ? `
-                    <span class="inline-flex items-center bg-slate-100 text-slate-700 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full">
-                        ${formattedDate}
+                    <span class="inline-flex items-center gap-1 ${dateBadgeStyle} text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full">
+                        <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span>${formattedDate}</span>
                     </span>` : ''}
                 </div>
                 

@@ -223,21 +223,25 @@
 
         <!-- Sub Navigation: Today vs Upcoming & Grade Filter Chips -->
         <div class="space-y-3 mb-5 sm:mb-6">
-            <!-- Time Tabs (Today vs Upcoming) -->
-            <div class="flex items-center justify-between border-b border-slate-200 px-1">
-                <div class="flex gap-4 sm:gap-8">
-                    <button onclick="switchTimeTab('today')" id="tab-time-today" class="time-tab-active pb-2.5 font-bold text-sm sm:text-base tracking-tight transition-all duration-200 flex items-center gap-2">
+            <!-- Time Tabs (Today vs Upcoming vs All Classes) -->
+            <div class="flex items-center justify-between border-b border-slate-200 px-1 overflow-x-auto no-scrollbar">
+                <div class="flex gap-3 sm:gap-6 flex-shrink-0">
+                    <button onclick="switchTimeTab('today')" id="tab-time-today" class="time-tab-active pb-2.5 font-bold text-xs sm:text-base tracking-tight transition-all duration-200 flex items-center gap-1.5 sm:gap-2">
                         <span>Today's Classes</span>
-                        <span id="today-count" class="hidden text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-extrabold"></span>
+                        <span id="today-count" class="hidden text-[10px] sm:text-[11px] bg-amber-100 text-amber-800 px-1.5 sm:px-2 py-0.5 rounded-full font-extrabold"></span>
                     </button>
-                    <button onclick="switchTimeTab('upcoming')" id="tab-time-upcoming" class="time-tab-inactive pb-2.5 font-bold text-sm sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-2">
+                    <button onclick="switchTimeTab('upcoming')" id="tab-time-upcoming" class="time-tab-inactive pb-2.5 font-bold text-xs sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-1.5 sm:gap-2">
                         <span>Upcoming</span>
-                        <span id="upcoming-count" class="hidden text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-extrabold"></span>
+                        <span id="upcoming-count" class="hidden text-[10px] sm:text-[11px] bg-slate-100 text-slate-600 px-1.5 sm:px-2 py-0.5 rounded-full font-extrabold"></span>
+                    </button>
+                    <button onclick="switchTimeTab('all')" id="tab-time-all" class="time-tab-inactive pb-2.5 font-bold text-xs sm:text-base tracking-tight hover:text-amber-700 transition-all duration-200 flex items-center gap-1.5 sm:gap-2">
+                        <span>All Classes</span>
+                        <span id="all-count" class="hidden text-[10px] sm:text-[11px] bg-slate-100 text-slate-600 px-1.5 sm:px-2 py-0.5 rounded-full font-extrabold"></span>
                     </button>
                 </div>
 
                 <!-- Active Syllabus Indicator Tag -->
-                <span id="active-syllabus-indicator" class="text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-white border border-amber-200 text-amber-900 shadow-sm hidden sm:inline-block">
+                <span id="active-syllabus-indicator" class="text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-white border border-amber-200 text-amber-900 shadow-sm hidden sm:inline-block flex-shrink-0">
                     CBSE Syllabus
                 </span>
             </div>

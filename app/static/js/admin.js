@@ -281,6 +281,14 @@ async function loadSessions() {
     }
 }
 
+function getAdminLocalDateStr() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 function renderSessionsTable() {
     const tbody = document.getElementById('sessions-tbody');
     const countBadge = document.getElementById('admin-session-count');
@@ -291,8 +299,7 @@ function renderSessionsTable() {
     const classFilter = document.getElementById('admin-session-class')?.value || 'ALL';
     const dateFilter = document.getElementById('admin-session-date')?.value || 'ALL';
 
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayStr = getAdminLocalDateStr();
 
     let filtered = sessions.filter(s => {
         // 1. Syllabus filter
@@ -318,6 +325,8 @@ function renderSessionsTable() {
             if (s.class_date !== todayStr) return false;
         } else if (dateFilter === 'UPCOMING') {
             if (s.class_date <= todayStr) return false;
+        } else if (dateFilter === 'PAST') {
+            if (s.class_date >= todayStr) return false;
         }
 
         // 4. Search query
@@ -620,9 +629,8 @@ function showCreateModal() {
 
         // Populate initial batch dropdown
         updateBatchDropdownOptions(defaultCategory, 'ALL');
-        // Set today's date as default
-        const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('s_date').value = todayStr;
+        // Set local today's date as default
+        document.getElementById('s_date').value = getAdminLocalDateStr();
     }
     document.getElementById('modal').classList.remove('hidden');
 }

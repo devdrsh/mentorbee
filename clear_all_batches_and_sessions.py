@@ -9,6 +9,10 @@ from app.models.session import ClassSession
 from app.models.batch import Batch
 
 def clear_all():
+    if "--confirm-wipe-all-data" not in sys.argv:
+        print("[BLOCKED] Database wipe aborted. Batch and session persistence is enabled.")
+        print("To intentionally clear the database, pass flag: python clear_all_batches_and_sessions.py --confirm-wipe-all-data")
+        return
     print("=" * 60)
     print("CLEARING ALL BATCHES AND SESSIONS FROM DATABASE")
     print("=" * 60)

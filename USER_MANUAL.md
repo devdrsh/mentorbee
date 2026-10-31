@@ -59,7 +59,7 @@ The Administrative Console provides total operational control over sessions, bat
   - **🔍 Search Filter**: Live instant filtering by Topic, Batch Name, Subject, or Timing.
   - **Syllabus Filter**: Filter by `All Syllabuses`, `CBSE`, `STATE`, or `⚡ EXAM KILLER`.
   - **Class / Grade Filter**: Filter by `All Classes`, `8th`, `9th`, `10th`, `11th Sci`, `11th Com`, `12th Sci`, or `12th Com`.
-  - **Date Filter**: Filter between `All Dates`, `Today's Sessions`, or `Upcoming Sessions`.
+  - **Date Filter**: Filter between `All Dates`, `Today's Sessions`, `Upcoming Sessions`, or `Past Sessions`.
   - **Live Counter & Reset**: Displays exact matched count (e.g. `12 of 34 Sessions`) with a 1-click `Reset` button.
 - **Creating a Session**:
   1. Click **`+ Create Session`**.
@@ -110,7 +110,7 @@ Designed for lightning-fast operation on mobile smartphones, tablets, and deskto
   - **`⚡ EXAM KILLER` Tab (Rose Dot)**: Dedicated section for high-intensity Exam Killer crash courses, model exams, and revision discussions, completely segregated from regular classes.
 - **🔍 Instant Search Bar**: Search dynamically by Batch Name, Subject/Topic, or Time. Results filter in real-time.
 - **Class Filter Chips (Inside Syllabus)**: Filter instantly between `All Classes`, `8th`, `9th`, `10th`, `11th Sci`, `11th Com`, `12th Sci`, and `12th Com`.
-- **Today vs Upcoming Tabs**: Filter between today's active schedule and future sessions.
+- **Time Tabs (`Today's Classes`, `Upcoming`, `All Classes`)**: Filter between today's active schedule, upcoming future sessions, or all classes. Every session card displays an explicit date badge (`Today`, `Upcoming`, or scheduled date) guaranteeing complete schedule visibility across dates.
 
 ### 4.3 1-Click Class Actions & Audit Accountability
 - **📋 Copy Message**: Generates the standardized WhatsApp broadcast text with 1 tap. Automatically records the staff member's name in the Admin Security Audit Log.

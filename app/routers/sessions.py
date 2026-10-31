@@ -65,9 +65,12 @@ def get_sessions(
     syllabus: Optional[str] = Query(None),
     class_category: Optional[str] = Query(None),
     class_number: Optional[str] = Query(None),
+    session_date: Optional[date] = Query(None),
     db: Session = Depends(get_db)
 ):
     query = db.query(ClassSession).options(joinedload(ClassSession.batch))
+    if session_date:
+        query = query.filter(ClassSession.class_date == session_date)
     if syllabus or class_category or class_number:
         query = apply_class_filters(query, syllabus, class_category, class_number)
     return query.order_by(ClassSession.class_date.desc(), ClassSession.start_time.desc()).all()
@@ -97,6 +100,21 @@ def get_upcoming_sessions(
     if syllabus or class_category or class_number:
         query = apply_class_filters(query, syllabus, class_category, class_number)
     return query.order_by(ClassSession.class_date.asc(), ClassSession.start_time.asc()).all()
+
+@router.get("/all", response_model=List[ClassSessionResponse])
+def get_all_active_sessions(
+    syllabus: Optional[str] = Query(None),
+    class_category: Optional[str] = Query(None),
+    class_number: Optional[str] = Query(None),
+    session_date: Optional[date] = Query(None),
+    db: Session = Depends(get_db)
+):
+    query = db.query(ClassSession).options(joinedload(ClassSession.batch)).filter(ClassSession.is_active == True)
+    if session_date:
+        query = query.filter(ClassSession.class_date == session_date)
+    if syllabus or class_category or class_number:
+        query = apply_class_filters(query, syllabus, class_category, class_number)
+    return query.order_by(ClassSession.class_date.desc(), ClassSession.start_time.asc()).all()
 
 @router.get("/{session_id}", response_model=ClassSessionResponse)
 def get_session(session_id: int, db: Session = Depends(get_db)):
